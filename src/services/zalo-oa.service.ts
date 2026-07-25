@@ -351,17 +351,38 @@ export function verifyWebhookSignature(input: {
   rawBody: string;
   timestamp: string | undefined;
 }): boolean {
-  if (!env.ZALO_OA_APP_SECRET || !env.ZALO_OA_APP_ID) return false;
-  if (!input.signatureHeader || !input.timestamp) return false;
+  if (!env.ZALO_OA_APP_ID || !env.ZALO_OA_SECRET_KEY) {
+    return false;
+  }
 
-  const provided = input.signatureHeader.replace(/^mac=/i, '').trim().toLowerCase();
+  if (!input.signatureHeader || !input.timestamp || !input.rawBody) {
+    return false;
+  }
+
+  const provided = input.signatureHeader
+    .replace(/^mac\s*=\s*/i, '')
+    .trim()
+    .toLowerCase();
+
   const expected = crypto
     .createHash('sha256')
-    .update(env.ZALO_OA_APP_ID + input.rawBody + input.timestamp + env.ZALO_OA_APP_SECRET)
+    .update(
+      env.ZALO_OA_APP_ID +
+        input.rawBody +
+        input.timestamp +
+        env.ZALO_OA_SECRET_KEY,
+      'utf8'
+    )
     .digest('hex');
 
-  if (provided.length !== expected.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+  if (provided.length !== expected.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(
+    Buffer.from(provided, 'utf8'),
+    Buffer.from(expected, 'utf8')
+  );
 }
 
 /**

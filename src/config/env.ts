@@ -17,6 +17,7 @@ const schema = z.object({
   // ----- Zalo Official Account (OA) -----
   ZALO_OA_APP_ID: z.string().trim().default(''),
   ZALO_OA_APP_SECRET: z.string().trim().default(''),
+  ZALO_OA_SECRET_KEY: z.string().trim().default(''),
   ZALO_OA_ID: z.string().trim().default(''),
   // Refresh token khởi tạo (dán 1 lần từ Zalo OA Explorer). Sau đó hệ thống tự làm mới.
   ZALO_OA_REFRESH_TOKEN: z.string().trim().default(''),

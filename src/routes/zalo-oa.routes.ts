@@ -42,27 +42,26 @@ zaloOaRouter.get('/webhook', (_req, res) => {
 /* Webhook nhận sự kiện                                                 */
 /* ------------------------------------------------------------------ */
 zaloOaRouter.post('/webhook', async (req: Request, res: Response) => {
-  // Luôn trả 200 ngay để Zalo xác nhận Webhook URL thành công.
+  // Trả 200 ngay để Zalo không gửi lại sự kiện.
   res.status(200).json({ ok: true });
 
   const body = req.body ?? {};
 
-  // Request Zalo dùng để kiểm tra URL chưa phải sự kiện thật.
+  // Request kiểm tra URL không phải sự kiện thật.
   if (!body.event_name) {
     console.log('zalo_oa_webhook_probe_ok');
     return;
   }
 
-  const rawBody = JSON.stringify(body);
+  const rawBody =
+    (req as Request & { rawBody?: string }).rawBody ??
+    JSON.stringify(body);
+
   const signature = req.header('x-zevent-signature');
   const timestamp = (body.timestamp ?? '').toString();
 
-  // Giữ nguyên kiểm tra chữ ký cho sự kiện thật.
-  const signatureRequired = Boolean(
-    env.ZALO_OA_APP_SECRET && env.ZALO_OA_APP_ID
-  );
-
-  if (signatureRequired) {
+  // Chỉ xác minh khi đã cấu hình OA Secret Key.
+  if (env.ZALO_OA_SECRET_KEY && env.ZALO_OA_APP_ID) {
     const valid = verifyWebhookSignature({
       signatureHeader: signature,
       rawBody,
@@ -70,11 +69,16 @@ zaloOaRouter.post('/webhook', async (req: Request, res: Response) => {
     });
 
     if (!valid) {
-      // Không trả 401 vì response 200 đã được gửi.
-      // Chỉ bỏ qua sự kiện không hợp lệ.
-      console.warn('zalo_oa_webhook_invalid_signature');
+      console.warn('zalo_oa_webhook_invalid_signature', {
+        eventName: body.event_name,
+        hasSignature: Boolean(signature),
+        hasTimestamp: Boolean(timestamp),
+        rawBodyLength: rawBody.length
+      });
       return;
     }
+  } else {
+    console.warn('zalo_oa_webhook_signature_not_configured');
   }
 
   try {
@@ -158,6 +162,7 @@ zaloOaRouter.get('/oauth/callback', async (req, res) => {
 type OaEvent = {
   app_id?: string;
   sender?: { id?: string };
+  follower?: { id?: string };
   recipient?: { id?: string };
   user_id_by_app?: string;
   event_name?: string;
@@ -171,7 +176,7 @@ type OaEvent = {
 
 async function handleOaEvent(body: OaEvent): Promise<void> {
   const eventName = body.event_name ?? '';
-  const senderId = body.sender?.id;
+  const senderId = body.sender?.id ?? body.follower?.id;
   const msgId = body.message?.msg_id ?? `${eventName}-${body.timestamp ?? ''}`;
 
   if (!senderId) return;

@@ -28,7 +28,15 @@ app.use(pinoHttp({
     ? ['req.headers.authorization', 'req.headers.x-stb-chatbot-key', 'req.headers.x-bot-api-secret-token', 'req.query.key', 'req.body.key']
     : ['req.headers.authorization', 'req.headers.x-stb-chatbot-key', 'req.headers.x-bot-api-secret-token', 'req.body.key']
 }));
-app.use(express.json({ limit: '1mb' }));
+app.use(
+  express.json({
+    limit: '1mb',
+    verify: (req, _res, buffer) => {
+      (req as express.Request & { rawBody?: string }).rawBody =
+        buffer.toString('utf8');
+    }
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'son-tien-bao-smart-advisor-v5-brain', version: '5.0.1', time: new Date().toISOString() }));
