@@ -1,0 +1,251 @@
+import { Router, type Response } from 'express';
+import { z } from 'zod';
+import {
+  listProductsForAdmin,
+  getProductById,
+  createProduct,
+  updateProduct,
+  softDeleteProduct,
+  setProductStatus,
+  setProductApproval,
+  updatePriceStock,
+  listFacets
+} from '../services/product-admin.service.js';
+import { requireAuth, requirePermission, type AuthedRequest } from '../utils/auth-middleware.js';
+import { writeAuditLog } from '../services/audit.service.js';
+import { firstStr } from '../utils/http-params.js';
+
+/**
+ * Route quản lý sản phẩm cho trang quản trị.
+ *
+ *   GET    /api/admin/products             — danh sách (lọc, phân trang)
+ *   GET    /api/admin/products/facets      — danh mục & thương hiệu (cho bộ lọc)
+ *   GET    /api/admin/products/:id         — chi tiết
+ *   POST   /api/admin/products             — tạo mới
+ *   PUT    /api/admin/products/:id         — cập nhật
+ *   POST   /api/admin/products/:id/price   — cập nhật giá & tồn kho
+ *   POST   /api/admin/products/:id/status  — bật/tắt (active/inactive)
+ *   POST   /api/admin/products/:id/approval— duyệt (pending/approved/rejected)
+ *   DELETE /api/admin/products/:id         — xóa mềm (chuyển inactive)
+ *
+ * RBAC:
+ *   - Xem: mọi vai trò đã đăng nhập có 'product.view'.
+ *   - Sửa/tạo/xóa: 'product.edit' (super_admin, manager).
+ */
+
+export const productAdminRouter = Router();
+
+productAdminRouter.use(requireAuth);
+
+const packageSizesSchema = z.array(z.number().positive()).max(20).optional();
+
+const productInputSchema = z.object({
+  sku: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(300),
+  brand: z.string().trim().max(120).optional(),
+  category: z.string().trim().max(120).optional(),
+  description: z.string().trim().max(4000).optional(),
+  use_case: z.string().trim().max(1000).optional(),
+  coverage_text: z.string().trim().max(300).optional(),
+  coverage_min: z.number().positive().optional(),
+  coverage_max: z.number().positive().optional(),
+  recommended_coats: z.number().int().positive().max(10).optional(),
+  package_text: z.string().trim().max(300).optional(),
+  package_sizes: packageSizesSchema,
+  price: z.number().nonnegative().optional(),
+  stock_quantity: z.number().nonnegative().optional(),
+  image_url: z.string().url().max(1000).optional(),
+  source_url: z.string().url().max(1000).optional()
+});
+
+/* ------------------------------------------------------------------ */
+/* Danh sách + facets                                                  */
+/* ------------------------------------------------------------------ */
+productAdminRouter.get(
+  '/',
+  requirePermission('product.view'),
+  async (req: AuthedRequest, res: Response) => {
+    const query = z
+      .object({
+        q: z.string().trim().max(200).optional(),
+        category: z.string().trim().max(120).optional(),
+        brand: z.string().trim().max(120).optional(),
+        status: z.enum(['active', 'inactive']).optional(),
+        page: z.coerce.number().int().min(1).default(1),
+        pageSize: z.coerce.number().int().min(1).max(100).default(20)
+      })
+      .safeParse(req.query);
+
+    if (!query.success) {
+      res.status(400).json({ error: 'invalid_query', details: query.error.flatten() });
+      return;
+    }
+
+    const result = await listProductsForAdmin(query.data);
+    res.json(result);
+  }
+);
+
+productAdminRouter.get(
+  '/facets',
+  requirePermission('product.view'),
+  async (_req: AuthedRequest, res: Response) => {
+    res.json(await listFacets());
+  }
+);
+
+productAdminRouter.get(
+  '/:id',
+  requirePermission('product.view'),
+  async (req: AuthedRequest, res: Response) => {
+    const product = await getProductById(req.params.id ?? '');
+    if (!product) {
+      res.status(404).json({ error: 'not_found' });
+      return;
+    }
+    res.json(product);
+  }
+);
+
+/* ------------------------------------------------------------------ */
+/* Tạo / cập nhật                                                      */
+/* ------------------------------------------------------------------ */
+productAdminRouter.post(
+  '/',
+  requirePermission('product.edit'),
+  async (req: AuthedRequest, res: Response) => {
+    const parsed = productInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'invalid_input', details: parsed.error.flatten() });
+      return;
+    }
+
+    try {
+      const product = await createProduct(parsed.data);
+      await writeAuditLog({
+        actorId: req.staff?.sub,
+        actorEmail: req.staff?.email,
+        action: 'product.create',
+        entity: 'products',
+        entityId: product.id,
+        metadata: { sku: product.sku }
+      });
+      res.status(201).json(product);
+    } catch (error) {
+      res.status(400).json({ error: 'create_failed', message: (error as Error).message });
+    }
+  }
+);
+
+productAdminRouter.put(
+  '/:id',
+  requirePermission('product.edit'),
+  async (req: AuthedRequest, res: Response) => {
+    const parsed = productInputSchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'invalid_input', details: parsed.error.flatten() });
+      return;
+    }
+
+    try {
+      const product = await updateProduct(req.params.id ?? '', parsed.data);
+      await writeAuditLog({
+        actorId: req.staff?.sub,
+        actorEmail: req.staff?.email,
+        action: 'product.update',
+        entity: 'products',
+        entityId: product.id
+      });
+      res.json(product);
+    } catch (error) {
+      res.status(400).json({ error: 'update_failed', message: (error as Error).message });
+    }
+  }
+);
+
+productAdminRouter.post(
+  '/:id/price',
+  requirePermission('product.edit'),
+  async (req: AuthedRequest, res: Response) => {
+    const parsed = z
+      .object({
+        price: z.number().nonnegative().optional(),
+        stock_quantity: z.number().nonnegative().optional()
+      })
+      .safeParse(req.body);
+
+    if (!parsed.success) {
+      res.status(400).json({ error: 'invalid_input' });
+      return;
+    }
+
+    await updatePriceStock(req.params.id ?? '', parsed.data);
+    await writeAuditLog({
+      actor: req.staff,
+      action: 'product.price_update',
+      entity: 'products',
+      entityId: req.params.id,
+      metadata: parsed.data
+    });
+    res.json({ ok: true });
+  }
+);
+
+productAdminRouter.post(
+  '/:id/status',
+  requirePermission('product.edit'),
+  async (req: AuthedRequest, res: Response) => {
+    const parsed = z.object({ status: z.enum(['active', 'inactive']) }).safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'invalid_input' });
+      return;
+    }
+    await setProductStatus(req.params.id ?? '', parsed.data.status);
+    await writeAuditLog({
+      actor: req.staff,
+      action: 'product.status',
+      entity: 'products',
+      entityId: req.params.id,
+      metadata: { status: parsed.data.status }
+    });
+    res.json({ ok: true });
+  }
+);
+
+productAdminRouter.post(
+  '/:id/approval',
+  requirePermission('product.edit'),
+  async (req: AuthedRequest, res: Response) => {
+    const parsed = z
+      .object({ approval: z.enum(['pending', 'approved', 'rejected']) })
+      .safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'invalid_input' });
+      return;
+    }
+    await setProductApproval(req.params.id ?? '', parsed.data.approval);
+    await writeAuditLog({
+      actor: req.staff,
+      action: 'product.approval',
+      entity: 'products',
+      entityId: req.params.id,
+      metadata: { approval: parsed.data.approval }
+    });
+    res.json({ ok: true });
+  }
+);
+
+productAdminRouter.delete(
+  '/:id',
+  requirePermission('product.edit'),
+  async (req: AuthedRequest, res: Response) => {
+    await softDeleteProduct(req.params.id ?? '');
+    await writeAuditLog({
+      actor: req.staff,
+      action: 'product.soft_delete',
+      entity: 'products',
+      entityId: req.params.id
+    });
+    res.json({ ok: true });
+  }
+);
