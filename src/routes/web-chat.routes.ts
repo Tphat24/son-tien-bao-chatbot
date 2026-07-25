@@ -56,6 +56,7 @@ webChatRouter.get('/config', (_req, res) => {
       'Tư vấn sơn nội thất',
       'Tư vấn sơn ngoại thất',
       'Tường bị thấm, bong tróc',
+      'Tính lượng sơn cho công trình',
       'Tôi cần nhận báo giá',
       'Tư vấn trực tiếp'
     ]
@@ -90,7 +91,7 @@ webChatRouter.post('/message', rateLimit, async (req, res) => {
       ...result,
       quickReplies: result.handoffRecommended
         ? ['Nhận báo giá', 'Tư vấn trực tiếp', 'Gọi hotline']
-        : ['Tư vấn thêm', 'Nhận báo giá', 'Tư vấn trực tiếp']
+        : ['Tư vấn thêm', 'Tính lượng sơn', 'Nhận báo giá', 'Tư vấn trực tiếp']
     };
 
     res.status(200).json(response);

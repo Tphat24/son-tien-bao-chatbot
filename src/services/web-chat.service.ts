@@ -2,6 +2,7 @@ import { env } from '../config/env.js';
 import { retrieveAdvisorContext } from './advisor-context.service.js';
 import { generateSafeReply } from './ai.service.js';
 import { appendConversationTurn, getConversationHistory } from './conversation.service.js';
+import { answerPaintCalculationMessage } from './paint-calculator-chat.service.js';
 
 export type WebChatSource = {
   title: string;
@@ -33,14 +34,32 @@ export async function answerWebMessage(input: {
     input.message
   ].join(' | ');
 
-  const context = await retrieveAdvisorContext(retrievalQuery);
-
   await appendConversationTurn({
     userId: input.sessionId,
     userName: input.userName,
     role: 'user',
     content: input.message
   });
+
+  const calculator = answerPaintCalculationMessage({
+    message: input.message,
+    history
+  });
+  if (calculator.handled && calculator.reply) {
+    await appendConversationTurn({
+      userId: input.sessionId,
+      userName: input.userName,
+      role: 'assistant',
+      content: calculator.reply
+    });
+    return {
+      reply: calculator.reply,
+      sources: [],
+      handoffRecommended: Boolean(calculator.handoffRecommended)
+    };
+  }
+
+  const context = await retrieveAdvisorContext(retrievalQuery);
 
   const reply = await generateSafeReply({
     userText: input.message,
