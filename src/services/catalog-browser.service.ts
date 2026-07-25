@@ -1,5 +1,39 @@
 import { db } from '../db/supabase.js';
+import { env } from '../config/env.js';
 import { normalizeText } from '../utils/text.js';
+
+
+/**
+ * Chuẩn hoá URL sản phẩm để hiển thị/gửi cho khách.
+ *
+ * source_url trong DB có thể ở nhiều dạng (nhất là sản phẩm nhập tay qua admin):
+ *  - URL tuyệt đối hợp lệ: giữ nguyên.
+ *  - Đường dẫn tương đối ('/san-pham/x.html'): ghép với domain công ty.
+ *  - Thiếu scheme ('sontienbao.com/x'): thêm https://
+ *  - Rỗng / không hợp lệ: trả undefined (không hiển thị link sai).
+ */
+export function normalizeProductUrl(raw: string | null | undefined): string | undefined {
+  const value = (raw ?? '').trim();
+  if (!value) return undefined;
+  try {
+    // new URL với base xử lý được cả tương đối lẫn tuyệt đối.
+    const base = env.COMPANY_WEBSITE;
+    const withScheme = /^https?:\/\//i.test(value)
+      ? value
+      : /^\/\//.test(value)
+        ? `https:${value}`
+        : value.startsWith('/')
+          ? value // đường dẫn tương đối → để base xử lý
+          : /^[\w.-]+\.[a-z]{2,}(?:\/|$)/i.test(value)
+            ? `https://${value}` // 'sontienbao.com/...' thiếu scheme
+            : value;
+    const url = new URL(withScheme, base);
+    if (!['http:', 'https:'].includes(url.protocol)) return undefined;
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
 
 
 export const CATALOG_PAGE_SIZE = 5;
@@ -423,10 +457,12 @@ export function formatCatalogPage(result: CatalogPage): string {
     if (item.price !== null) details.push(`Giá tham khảo: ${formatMoney(item.price)}`);
 
 
+    const link = normalizeProductUrl(item.sourceUrl);
+
     return [
       `${absoluteIndex}. ${item.name}`,
       ...details.map((detail) => `   ${detail}`),
-      item.sourceUrl ? `   ${item.sourceUrl}` : undefined,
+      link ? `   Xem chi tiết: ${link}` : undefined,
       ''
     ].filter((line): line is string => Boolean(line));
   });
