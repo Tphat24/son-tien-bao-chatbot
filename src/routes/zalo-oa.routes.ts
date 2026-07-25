@@ -47,6 +47,11 @@ zaloOaRouter.post('/webhook', async (req: Request, res: Response) => {
 
   const body = req.body ?? {};
 
+  console.log('zalo_oa_webhook_received', {
+  eventName: body.event_name,
+  senderId: body.sender?.id ?? body.follower?.id,
+  hasSignature: Boolean(req.header('x-zevent-signature'))
+});
   // Request kiểm tra URL không phải sự kiện thật.
   if (!body.event_name) {
     console.log('zalo_oa_webhook_probe_ok');
@@ -218,9 +223,16 @@ async function handleOaEvent(body: OaEvent): Promise<void> {
 async function sendGreeting(userId: string): Promise<void> {
   const greeting =
     `Xin chào Anh/Chị! Em là trợ lý tư vấn của ${env.COMPANY_NAME}. ` +
-    'Em có thể hỗ trợ Anh/Chị chọn loại sơn, tính lượng sơn, tham khảo giá và gửi yêu cầu cho nhân viên tư vấn.\n\n' +
-    'Anh/Chị đang cần hỗ trợ nội dung nào ạ?';
-  await sendOaButtons(userId, greeting, buildMainMenuButtons());
+    'Em có thể hỗ trợ chọn sơn, tính lượng sơn và tiếp nhận yêu cầu báo giá.';
+
+  const result = await sendOaText(userId, greeting);
+
+  if (!result.ok) {
+    console.error('zalo_oa_greeting_failed', {
+      error: result.error,
+      message: result.message
+    });
+  }
 }
 
 async function handleImage(userId: string, body: OaEvent): Promise<void> {

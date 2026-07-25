@@ -258,7 +258,10 @@ function splitText(text: string): string[] {
   return chunks;
 }
 
-async function callOaApi(path: string, payload: Record<string, unknown>): Promise<OaSendResult> {
+async function callOaApi(
+  path: string,
+  payload: Record<string, unknown>
+): Promise<OaSendResult> {
   const accessToken = await getValidAccessToken();
 
   const response = await withTimeout(
@@ -279,7 +282,25 @@ async function callOaApi(path: string, payload: Record<string, unknown>): Promis
     data?: { message_id?: string };
   };
 
-  const ok = response.ok && (data.error === 0 || data.error === undefined);
+  const ok =
+    response.ok &&
+    (data.error === 0 || data.error === undefined);
+
+  if (ok) {
+    console.log('zalo_oa_send_ok', {
+      path,
+      status: response.status,
+      messageId: data.data?.message_id
+    });
+  } else {
+    console.error('zalo_oa_send_failed', {
+      path,
+      status: response.status,
+      error: data.error,
+      message: data.message
+    });
+  }
+
   return {
     ok,
     error: data.error,
@@ -319,17 +340,18 @@ export async function sendOaButtons(
   const trimmed = buttons.slice(0, 5).map((button) => ({
     type: 'oa.query.show',
     title: button.title.slice(0, 100),
-    payload: button.payload
+    payload: button.payload.slice(0, 1000)
   }));
 
   return callOaApi('/message/cs', {
-    recipient: { user_id: userId },
+    recipient: {
+      user_id: userId
+    },
     message: {
+      text: text.slice(0, 2000),
       attachment: {
         type: 'template',
         payload: {
-          template_type: 'list',
-          elements: [{ title: text.slice(0, 100), subtitle: text.slice(0, 300) }],
           buttons: trimmed
         }
       }
