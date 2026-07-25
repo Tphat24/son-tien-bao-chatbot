@@ -42,36 +42,47 @@ zaloOaRouter.get('/webhook', (_req, res) => {
 /* Webhook nhận sự kiện                                                 */
 /* ------------------------------------------------------------------ */
 zaloOaRouter.post('/webhook', async (req: Request, res: Response) => {
-  const rawBody = JSON.stringify(req.body ?? {});
-  const signature = req.header('x-zevent-signature');
-  const timestamp = (req.body?.timestamp ?? '').toString();
+  // Luôn trả 200 ngay để Zalo xác nhận Webhook URL thành công.
+  res.status(200).json({ ok: true });
 
-    // Zalo gửi POST thăm dò khi thiết lập Webhook URL.
-  // Request này chưa phải sự kiện thật nên có thể không có event_name.
-  if (!req.body?.event_name) {
-    return res.status(200).json({ ok: true });
+  const body = req.body ?? {};
+
+  // Request Zalo dùng để kiểm tra URL chưa phải sự kiện thật.
+  if (!body.event_name) {
+    console.log('zalo_oa_webhook_probe_ok');
+    return;
   }
 
-  // Bỏ qua xác minh chữ ký chỉ khi chưa cấu hình secret (môi trường dev).
-  const signatureRequired = Boolean(env.ZALO_OA_APP_SECRET && env.ZALO_OA_APP_ID);
+  const rawBody = JSON.stringify(body);
+  const signature = req.header('x-zevent-signature');
+  const timestamp = (body.timestamp ?? '').toString();
+
+  // Giữ nguyên kiểm tra chữ ký cho sự kiện thật.
+  const signatureRequired = Boolean(
+    env.ZALO_OA_APP_SECRET && env.ZALO_OA_APP_ID
+  );
+
   if (signatureRequired) {
-    const valid = verifyWebhookSignature({ signatureHeader: signature, rawBody, timestamp });
+    const valid = verifyWebhookSignature({
+      signatureHeader: signature,
+      rawBody,
+      timestamp
+    });
+
     if (!valid) {
+      // Không trả 401 vì response 200 đã được gửi.
+      // Chỉ bỏ qua sự kiện không hợp lệ.
       console.warn('zalo_oa_webhook_invalid_signature');
-      return res.status(401).json({ error: 'invalid_signature' });
+      return;
     }
   }
 
-  // Trả 200 NGAY để Zalo không gửi lại. Xử lý phần còn lại chạy nền.
-  res.status(200).json({ ok: true });
-
   try {
-    await handleOaEvent(req.body ?? {});
+    await handleOaEvent(body);
   } catch (error) {
     console.error('zalo_oa_event_handler_failed', error);
   }
 });
-
 /* ------------------------------------------------------------------ */
 /* OAuth callback — hoàn tất kết nối OA lần đầu                         */
 /* ------------------------------------------------------------------ */
