@@ -46,6 +46,12 @@ zaloOaRouter.post('/webhook', async (req: Request, res: Response) => {
   const signature = req.header('x-zevent-signature');
   const timestamp = (req.body?.timestamp ?? '').toString();
 
+    // Zalo gửi POST thăm dò khi thiết lập Webhook URL.
+  // Request này chưa phải sự kiện thật nên có thể không có event_name.
+  if (!req.body?.event_name) {
+    return res.status(200).json({ ok: true });
+  }
+
   // Bỏ qua xác minh chữ ký chỉ khi chưa cấu hình secret (môi trường dev).
   const signatureRequired = Boolean(env.ZALO_OA_APP_SECRET && env.ZALO_OA_APP_ID);
   if (signatureRequired) {
