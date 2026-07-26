@@ -51,13 +51,12 @@ webChatRouter.get('/config', (_req, res) => {
     directorPhone: env.DIRECTOR_PHONE,
     directorZaloUrl: env.DIRECTOR_ZALO_URL,
     directorLabel: 'Zalo tư vấn trực tiếp',
-    welcome: `Xin chào Anh/Chị! Em là trợ lý AI của Sơn Tiến Bảo. Em có thể tư vấn chọn sơn, xử lý bề mặt, tính nhu cầu sơ bộ và hỗ trợ nhận báo giá.`,
+    welcome: `Xin chào Anh/Chị! Em là trợ lý AI của Sơn Tiến Bảo. Em có thể tư vấn chọn sơn, xử lý bề mặt, tính nhu cầu sơ bộ`,
     quickReplies: [
       'Tư vấn sơn nội thất',
       'Tư vấn sơn ngoại thất',
       'Tường bị thấm, bong tróc',
       'Tính lượng sơn cho công trình',
-      'Tôi cần nhận báo giá',
       'Tư vấn trực tiếp'
     ]
   });
@@ -90,8 +89,8 @@ webChatRouter.post('/message', rateLimit, async (req, res) => {
     const response = {
       ...result,
       quickReplies: result.handoffRecommended
-        ? ['Nhận báo giá', 'Tư vấn trực tiếp', 'Gọi hotline']
-        : ['Tư vấn thêm', 'Tính lượng sơn', 'Nhận báo giá', 'Tư vấn trực tiếp']
+        ? [ 'Tư vấn trực tiếp', 'Gọi hotline']
+        : ['Tư vấn thêm', 'Tính lượng sơn', 'Tư vấn trực tiếp']
     };
 
     res.status(200).json(response);
@@ -109,7 +108,7 @@ webChatRouter.post('/message', rateLimit, async (req, res) => {
       sources: [],
       handoffRecommended: true,
       directorZaloUrl: env.DIRECTOR_ZALO_URL,
-      quickReplies: ['Nhận báo giá', 'Tư vấn trực tiếp', 'Gọi hotline']
+      quickReplies: [ 'Tư vấn trực tiếp', 'Gọi hotline']
     };
     res.status(200).json(response);
     void writeDynamicLog({

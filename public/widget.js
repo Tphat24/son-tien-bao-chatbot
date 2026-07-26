@@ -976,7 +976,6 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
       'Tư vấn sơn nội thất',
       'Tư vấn sơn ngoại thất',
       'Tư vấn chống thấm',
-      'Nhận báo giá',
       'Tư vấn trực tiếp'
     ]
   };
@@ -1442,7 +1441,6 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
       } else {
         addQuickReplies([
           'Hỏi thêm',
-          'Nhận báo giá',
           'Tư vấn trực tiếp'
         ]);
       }
@@ -1457,7 +1455,6 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
       );
 
       addQuickReplies([
-        'Nhận báo giá',
         'Tư vấn trực tiếp'
       ]);
     } finally {
@@ -1796,17 +1793,6 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
       String(label)
         .trim()
         .toLowerCase();
-
-    if (
-      normalized.includes(
-        'nhận báo giá'
-      ) ||
-      normalized === 'báo giá'
-    ) {
-      showLeadForm();
-      return;
-    }
-
     if (
       normalized.includes(
         'tư vấn trực tiếp'
@@ -1870,7 +1856,6 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
 
       addQuickReplies([
         'Hỏi thêm',
-        'Nhận báo giá',
         'Tư vấn trực tiếp'
       ]);
     } else {
