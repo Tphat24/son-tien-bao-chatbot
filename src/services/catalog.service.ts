@@ -383,9 +383,10 @@ function enrichProductWithGtc(product: ProductRow, documents: KnowledgeRow[]): P
     : null;
 
   return {
-    ...product,
-    price: gtc,
-    price_label: gtc !== null ? 'GTC' : null
+  ...product,
+  price: gtc,
+  price_label: gtc !== null ? 'GTC' : null,
+  source_url: document?.source_url ?? product.source_url
   };
 }
 
