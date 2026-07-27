@@ -1,7 +1,6 @@
 import { db } from '../db/supabase.js';
 import { env } from '../config/env.js';
 import { normalizeText } from '../utils/text.js';
-import { extractVerifiedGtcPrice, queryTerms, relevanceScore } from './catalog.service.js';
 
 
 /**
@@ -221,9 +220,7 @@ function productRowToCatalogItem(product: ProductDatabaseRow): CatalogItem {
     category: detectCatalogCategory(searchable),
     categoryLabel: getCatalogCategoryLabel(detectCatalogCategory(searchable)),
     packageText: product.package_text,
-    // Không dùng products.price vì trường này có thể là giá ĐL.
-    // GTC được ghép từ tài liệu website đã xác thực trong listCatalogProducts().
-    price: null,
+    price: typeof product.price === 'number' ? product.price : null,
     sourceUrl: product.source_url,
     source: 'products'
   };
@@ -245,11 +242,7 @@ function knowledgeRowToCatalogItem(document: KnowledgeDatabaseRow): CatalogItem 
     category,
     categoryLabel: getCatalogCategoryLabel(category),
     packageText: null,
-    price: extractVerifiedGtcPrice({
-      title: document.title,
-      content: document.content,
-      url: document.source_url
-    }),
+    price: null,
     sourceUrl: document.source_url,
     source: 'knowledge_documents'
   };
@@ -356,76 +349,28 @@ function matchesBrand(item: CatalogItem, brand: string | undefined): boolean {
 }
 
 
-function catalogSearchScore(item: CatalogItem, query: string | undefined): number {
-  if (!query?.trim()) return 0;
-  return relevanceScore({
-    query,
-    title: item.name,
-    category: item.categoryLabel,
-    useCase: item.categoryLabel,
-    description: item.packageText,
-    url: item.sourceUrl
-  });
-}
-
-
 function matchesQuery(item: CatalogItem, query: string | undefined): boolean {
   if (!query?.trim()) return true;
-  const normalizedQuery = normalizeText(query);
-  const terms = queryTerms(query);
+  const terms = normalizeText(query)
+    .split(' ')
+    .filter((term) => term.length > 1);
   if (!terms.length) return true;
+
 
   const searchable = normalizeText(
     `${item.name} ${item.brand ?? ''} ${item.categoryLabel} ${item.packageText ?? ''} ${item.sourceUrl ?? ''}`
   );
-  if (searchable.includes(normalizedQuery)) return true;
-
-  const matched = terms.filter((term) => searchable.includes(term)).length;
-  const required = Math.max(1, Math.ceil(Math.min(terms.length, 4) * 0.6));
-  return matched >= required && catalogSearchScore(item, query) >= 8;
+  return terms.every((term) => searchable.includes(term));
 }
 
 
-function sortCatalogItems(items: CatalogItem[], query?: string): CatalogItem[] {
+function sortCatalogItems(items: CatalogItem[]): CatalogItem[] {
   return [...items].sort((left, right) => {
-    if (query?.trim()) {
-      const scoreDifference = catalogSearchScore(right, query) - catalogSearchScore(left, query);
-      if (scoreDifference !== 0) return scoreDifference;
-    }
-
     const leftBrand = normalizeText(left.brand ?? '');
     const rightBrand = normalizeText(right.brand ?? '');
     if (leftBrand !== rightBrand) return leftBrand.localeCompare(rightBrand, 'vi');
     return left.name.localeCompare(right.name, 'vi');
   });
-}
-
-
-function canonicalSourceUrl(rawUrl: string | null): string | null {
-  const normalized = normalizeProductUrl(rawUrl);
-  return normalized ? normalized.replace(/\/$/, '').toLowerCase() : null;
-}
-
-
-function findProductDocument(product: ProductDatabaseRow, documents: KnowledgeDatabaseRow[]): KnowledgeDatabaseRow | null {
-  const productUrl = canonicalSourceUrl(product.source_url);
-  if (productUrl) {
-    const exact = documents.find((document) => canonicalSourceUrl(document.source_url) === productUrl);
-    if (exact) return exact;
-  }
-
-  const name = normalizeText(product.name);
-  const tokens = name.split(' ').filter((term) => term.length >= 4);
-  let best: { document: KnowledgeDatabaseRow; score: number } | null = null;
-
-  for (const document of documents) {
-    const title = normalizeText(document.title);
-    const overlap = tokens.filter((term) => title.includes(term)).length;
-    const score = overlap * 10 + (title.includes(name) || name.includes(title) ? 40 : 0);
-    if (score >= 30 && (!best || score > best.score)) best = { document, score };
-  }
-
-  return best?.document ?? null;
 }
 
 
@@ -438,21 +383,8 @@ export async function listCatalogProducts(request: CatalogBrowseRequest = {}): P
   ]);
 
 
-  const productItems = products.map((product) => {
-    const item = productRowToCatalogItem(product);
-    const document = findProductDocument(product, documents);
-    const gtc = document
-      ? extractVerifiedGtcPrice({ title: document.title, content: document.content, url: document.source_url })
-      : null;
-    return {
-  ...item,
-  price: gtc,
-  sourceUrl: document?.source_url ?? item.sourceUrl
-};
-  });
-
   const items = uniqueCatalogItems([
-    ...productItems,
+    ...products.map(productRowToCatalogItem),
     ...documents.filter(isLikelyProductDocument).map(knowledgeRowToCatalogItem)
   ]);
 
@@ -463,8 +395,7 @@ export async function listCatalogProducts(request: CatalogBrowseRequest = {}): P
         matchesCategory(item, category) &&
         matchesBrand(item, request.brand) &&
         matchesQuery(item, request.query)
-    ),
-    request.query
+    )
   );
 
 
@@ -523,7 +454,8 @@ export function formatCatalogPage(result: CatalogPage): string {
     const details: string[] = [];
     if (item.brand) details.push(`Hãng: ${item.brand}`);
     if (item.packageText) details.push(`Quy cách: ${item.packageText}`);
-    if (item.price !== null) details.push(`GTC (giá tiêu chuẩn): ${formatMoney(item.price)}`);
+
+
 
     return [
       `${absoluteIndex}. ${item.name}`,

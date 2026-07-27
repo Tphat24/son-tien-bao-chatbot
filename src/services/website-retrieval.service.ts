@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'node:crypto';
 import { env } from '../config/env.js';
 import { db } from '../db/supabase.js';
-import { detectQueryIntent, relevanceScore, sanitizeKnowledgeForGtc, type KnowledgeRow } from './catalog.service.js';
+import { detectQueryIntent, relevanceScore, type KnowledgeRow } from './catalog.service.js';
 
 const EXCLUDED_PATH = /\/(cart|checkout|login|logout|register|account|wishlist|admin|wp-admin|gio-hang|thanh-toan)(\/|$)/i;
 const HTML_TYPES = ['text/html', 'application/xhtml+xml'];
@@ -151,7 +151,7 @@ export async function searchWebsiteLive(query: string): Promise<KnowledgeRow[]> 
     .filter((item) => item.score >= 8)
     .sort((a, b) => b.score - a.score)
     .slice(0, env.AI_MAX_KNOWLEDGE_DOCS)
-    .map((item) => sanitizeKnowledgeForGtc(item.page));
+    .map((item) => item.page);
 
   await Promise.all(ranked.map((document) => saveTrustedWebsiteDocument(document).catch(() => undefined)));
   return ranked;
