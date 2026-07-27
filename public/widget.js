@@ -1186,18 +1186,7 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
 
     bubble.appendChild(content);
 
-    const validSources =
-      Array.isArray(sources)
-        ? sources
-            .filter(
-              (source) =>
-                source?.url
-            )
-            .slice(
-              0,
-              MAX_VISIBLE_SOURCES
-            )
-        : [];
+    const validSources = [];
 
     if (validSources.length) {
       const sourceBox =

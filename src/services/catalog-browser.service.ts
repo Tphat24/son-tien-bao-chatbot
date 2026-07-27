@@ -525,13 +525,9 @@ export function formatCatalogPage(result: CatalogPage): string {
     if (item.packageText) details.push(`Quy cách: ${item.packageText}`);
     if (item.price !== null) details.push(`GTC (giá tiêu chuẩn): ${formatMoney(item.price)}`);
 
-
-    const link = normalizeProductUrl(item.sourceUrl);
-
     return [
       `${absoluteIndex}. ${item.name}`,
       ...details.map((detail) => `   ${detail}`),
-      link ? `   Xem chi tiết: ${link}` : undefined,
       ''
     ].filter((line): line is string => Boolean(line));
   });

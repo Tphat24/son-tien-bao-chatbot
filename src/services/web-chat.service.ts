@@ -94,22 +94,11 @@ export async function answerWebMessage(input: {
     content: reply
   });
 
-  const sources = uniqueSources([
-    ...context.products.map((product) => ({
-      title: product.name,
-      url: product.source_url ?? '',
-      type: 'product' as const
-    })),
-    ...context.knowledge.map((document) => ({
-      title: document.title,
-      url: document.source_url ?? '',
-      type: 'document' as const
-    }))
-  ]);
-
   return {
-    reply,
-    sources,
-    handoffRecommended: context.forceHuman || reply.includes(env.COMPANY_HOTLINE)
+  reply,
+  sources: [],
+  handoffRecommended:
+    context.forceHuman ||
+    reply.includes(env.COMPANY_HOTLINE)
   };
 }
