@@ -4,6 +4,27 @@ import { db } from '../db/supabase.js';
 import { generateSafeReply } from './ai.service.js';
 import { saveCachedReply } from './cache.service.js';
 import { appendConversationTurn, getConversationHistory } from './conversation.service.js';
+import { normalizeText } from '../utils/text.js';
+
+
+function buildFocusedRetrievalQuery(
+  question: string,
+  history: Awaited<ReturnType<typeof getConversationHistory>>
+): string {
+  const current = question.trim();
+  const normalized = normalizeText(current);
+  const isFollowUp =
+    current.length < 55 ||
+    /loai nao|san pham nao|cai nay|loai nay|gia bao nhieu|quy cach|xem them|con loai khac|loai tot hon|loai re hon|so sanh/.test(normalized);
+
+  if (!isFollowUp) return current;
+
+  const previousUserTurn = [...history]
+    .reverse()
+    .find((turn) => turn.role === 'user' && turn.content.trim());
+
+  return previousUserTurn ? `${previousUserTurn.content} | ${current}` : current;
+}
 
 export type AiJobRow = {
   id: string;
@@ -66,10 +87,7 @@ async function processAiJob(
 
   try {
     const history = await getConversationHistory(input.userId);
-    const retrievalQuery = [
-      ...history.slice(-4).map((turn) => turn.content),
-      input.question
-    ].join(' | ');
+    const retrievalQuery = buildFocusedRetrievalQuery(input.question, history);
     const advisorContextModule = (await import('./advisor-context.service.js')) as Record<string, any>;
     const retrieveAdvisorContext =
       advisorContextModule.retrieveAdvisorContext ?? advisorContextModule.default;

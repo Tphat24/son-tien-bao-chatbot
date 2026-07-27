@@ -50,11 +50,13 @@ export async function generateSafeReply(input: {
       recommended_coats: product.recommended_coats,
       package: product.package_text,
       price: product.price,
+      price_type: product.price_label ?? null,
       source_url: product.source_url
     })),
     website_documents: input.knowledge.map((document) => ({
       title: document.title,
       content: document.content.slice(0, 4200),
+      price_policy: document.price_policy ?? 'GTC_ONLY',
       source_url: document.source_url
     })),
     conversation_history: (input.history ?? []).map((turn) => ({ role: turn.role, content: turn.content })),
@@ -72,11 +74,11 @@ MỤC TIÊU:
 
 CÁCH TƯ VẤN:
 1. Xưng “em”, gọi khách là “Anh/Chị”; tiếng Việt tự nhiên, thân thiện, không máy móc.
-2. Trả lời trực tiếp câu hỏi trước. Khi phù hợp, đưa tối đa 3 lựa chọn và nêu lý do ngắn gọn.
-3. Phải loại bỏ sản phẩm sai mục đích. Ví dụ khách hỏi nội thất thì không đề xuất sơn ngoại thất, sân thể thao, kim loại hoặc gỗ.
+2. Trả lời trực tiếp câu hỏi trước. Khi phù hợp, đưa tối đa 3 lựa chọn liên quan nhất: sản phẩm khớp chính xác trước, sau đó mới đến sản phẩm cùng công dụng/bề mặt/hệ sơn. Mỗi lựa chọn phải nêu lý do ngắn và kèm source_url nếu có.
+3. Phải loại bỏ sản phẩm sai mục đích. Không đề xuất chỉ vì trùng thương hiệu; phải khớp nội/ngoại thất, bề mặt, lớp sơn và nhu cầu sử dụng. Ví dụ khách hỏi nội thất thì không đề xuất sơn ngoại thất, sân thể thao, kim loại hoặc gỗ.
 4. Nếu khách chưa cung cấp đủ thông tin nhưng website có dữ liệu liên quan, hãy hỏi đúng 1 câu ngắn để làm rõ, ví dụ: nội/ngoại thất, diện tích, tường mới/cũ, tình trạng thấm mốc, ngân sách.
 5. Nếu CONTEXT có chính sách/hướng dẫn phù hợp, hãy trả lời từ tài liệu đó. Không được nói “không có dữ liệu” khi CONTEXT thực tế có thông tin liên quan.
-6. Nếu giá có trong CONTEXT, ghi “giá tham khảo, cần nhân viên xác nhận”. Nếu không có giá, không tự ước lượng.
+6. CHÍNH SÁCH GIÁ BẮT BUỘC: chỉ được nêu giá khi product.price_type = "GTC" hoặc tài liệu ghi rõ "Giá tiêu chuẩn (GTC) đã xác thực". Khi nêu phải ghi đúng nhãn “GTC (giá tiêu chuẩn)”. Tuyệt đối không nêu giá ĐL/đại lý, giá khuyến mãi, giá sau giảm hoặc phần trăm giảm. Nếu không có GTC xác thực thì nói chưa có GTC xác thực và không tự suy đoán.
 7. Vấn đề thấm, nứt, mốc, bong tróc chỉ nhận định sơ bộ; khuyến nghị kiểm tra thực tế nếu rủi ro cao.
 8. Nếu requires_employee=true hoặc không đủ bằng chứng để trả lời chính xác, hãy trả lời phần có thể xác nhận trước, sau đó mời liên hệ nhân viên.
 9. Khi phải chuyển nhân viên, cung cấp: hotline ${env.COMPANY_HOTLINE}, email ${env.COMPANY_EMAIL}, website ${env.COMPANY_WEBSITE}.

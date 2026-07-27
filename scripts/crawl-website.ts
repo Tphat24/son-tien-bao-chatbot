@@ -3,6 +3,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'node:crypto';
 import { db } from '../src/db/supabase.js';
 import { env } from '../src/config/env.js';
+import { sanitizeKnowledgeForGtc } from '../src/services/catalog.service.js';
 
 const maxPages = Number(process.env.CRAWL_MAX_PAGES ?? 300);
 const concurrency = Math.max(1, Math.min(8, Number(process.env.CRAWL_CONCURRENCY ?? 5)));
@@ -52,6 +53,14 @@ async function importPage(url: string): Promise<string[]> {
     content = content.slice(0, 60000);
 
     if (content.length > 180) {
+      const sanitized = sanitizeKnowledgeForGtc({
+        title,
+        content,
+        source_url: url,
+        approval_status: 'approved'
+      });
+      content = sanitized.content;
+
       const { error } = await db.from('knowledge_documents').upsert({
         title,
         content,
