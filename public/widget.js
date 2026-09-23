@@ -27,7 +27,6 @@
     'stb_web_chat_messages_v53';
 
   const MAX_STORED_MESSAGES = 24;
-  const MAX_VISIBLE_SOURCES = 3;
   const BRAND_LOGO_URL =
     'https://media.loveitopcdn.com/41744/logo.png';
 
@@ -44,8 +43,6 @@
     'send-fill': '<path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/>',
     'shield-check': '<path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/><path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/>',
     'stars': '<path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>',
-    'journal-check': '<path fill-rule="evenodd" d="M10.854 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708 0"/><path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/><path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/>',
-    'arrow-up-right': '<path fill-rule="evenodd" d="M14 2.5a.5.5 0 0 0-.5-.5h-6a.5.5 0 0 0 0 1h4.793L2.146 13.146a.5.5 0 0 0 .708.708L13 3.707V8.5a.5.5 0 0 0 1 0z"/>',
     'chat-square-text': '<path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2.5a2 2 0 0 0-1.6.8L8 14.333 6.1 11.8a2 2 0 0 0-1.6-.8H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6m0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/>',
     'tags': '<path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/><path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1z"/>',
     'house-door': '<path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/>',
@@ -418,50 +415,6 @@
     .stb-row.user .stb-time {
       text-align: right;
       color: #d5e7dd;
-    }
-
-    /*
-     * Sản phẩm và tài liệu liên quan.
-     */
-    .stb-sources {
-      display: grid;
-      gap: 6px;
-      margin-top: 10px;
-      padding-top: 9px;
-      border-top: 1px solid #e8efeb;
-    }
-
-    .stb-sources-title {
-      color: #315c48;
-      font-size: 11px;
-      font-weight: 850;
-    }
-
-    .stb-source {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin: 0;
-      padding: 7px 8px;
-      border: 1px solid #dbe7e0;
-      border-radius: 9px;
-      background: #f7faf8;
-      color: #0d5b3d;
-      font-size: 11px;
-      line-height: 1.35;
-      text-decoration: none;
-    }
-
-    .stb-source::after {
-      content: "↗";
-      flex: none;
-      font-size: 12px;
-    }
-
-    .stb-source:hover {
-      background: #eef6f1;
-      border-color: #bcd3c7;
     }
 
     /*
@@ -1159,36 +1112,6 @@
     .stb-bubble-content { gap: 10px; }
     .stb-time { margin-top: 6px; font-size: 9.5px; }
 
-    .stb-sources {
-      gap: 7px;
-      margin-top: 12px;
-      padding-top: 10px;
-    }
-
-    .stb-sources-title {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 10.5px;
-      letter-spacing: .02em;
-      text-transform: uppercase;
-    }
-
-    .stb-source {
-      min-height: 39px;
-      padding: 8px 10px;
-      border-color: #d9e7df;
-      border-radius: 11px;
-      background: var(--stb-green-50);
-      font-size: 11px;
-      font-weight: 650;
-      transition: transform .16s ease, border-color .16s ease, background .16s ease;
-    }
-
-    .stb-source::after { content: none; }
-    .stb-source:hover { transform: translateY(-1px); }
-    .stb-source .stb-icon { flex: none; font-size: 13px; }
-
     .stb-quick {
       grid-template-columns: 1fr 1fr;
       gap: 8px;
@@ -1753,7 +1676,7 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
   function addMessage(
     role,
     text,
-    sources = [],
+    _sources = [],
     persist = true
   ) {
     const row =
@@ -1796,85 +1719,6 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
 
     bubble.appendChild(content);
 
-    const validSources =
-      (Array.isArray(sources) ? sources : [])
-        .filter((source) => {
-          if (!source?.url) {
-            return false;
-          }
-
-          try {
-            const url = new URL(
-              source.url,
-              window.location.href
-            );
-
-            return [
-              'http:',
-              'https:'
-            ].includes(url.protocol);
-          } catch {
-            return false;
-          }
-        })
-        .slice(0, MAX_VISIBLE_SOURCES);
-
-    if (validSources.length) {
-      const sourceBox =
-        document.createElement('div');
-
-      sourceBox.className =
-        'stb-sources';
-
-      const sourceTitle =
-        document.createElement('div');
-
-      sourceTitle.className =
-        'stb-sources-title';
-
-      sourceTitle.innerHTML =
-        `${bootstrapIcon('journal-check')}<span>Nguồn tham khảo</span>`;
-
-      sourceBox.appendChild(
-        sourceTitle
-      );
-
-      validSources.forEach(
-        (source) => {
-          const link =
-            document.createElement('a');
-
-          link.className =
-            'stb-source';
-
-          link.href = source.url;
-          link.target = '_blank';
-
-          link.rel =
-            'noopener noreferrer';
-
-          const label =
-            document.createElement('span');
-
-          label.textContent =
-            source.title ||
-            'Xem thông tin trên sontienbao.com';
-
-          link.appendChild(label);
-          link.insertAdjacentHTML(
-            'beforeend',
-            bootstrapIcon(
-              'arrow-up-right'
-            )
-          );
-
-          sourceBox.appendChild(link);
-        }
-      );
-
-      bubble.appendChild(sourceBox);
-    }
-
     const time =
       document.createElement('div');
 
@@ -1889,7 +1733,6 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
       messages.push({
         role,
         text,
-        sources: validSources,
         time: Date.now()
       });
 
