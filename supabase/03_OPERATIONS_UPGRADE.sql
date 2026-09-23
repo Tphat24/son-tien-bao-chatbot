@@ -23,34 +23,34 @@ set search_path = public
 as $$
 declare
   current_row public.api_rate_limits%rowtype;
-  current_time timestamptz := clock_timestamp();
+  v_now timestamptz := clock_timestamp();
 begin
   if rate_limit < 1 or window_seconds < 1 then
     raise exception 'Invalid rate limit configuration';
   end if;
 
   insert into public.api_rate_limits(bucket_key, request_count, window_started_at, expires_at, updated_at)
-  values (rate_key, 1, current_time, current_time + make_interval(secs => window_seconds), current_time)
+  values (rate_key, 1, v_now, v_now + make_interval(secs => window_seconds), v_now)
   on conflict (bucket_key) do update
   set request_count = case
-        when public.api_rate_limits.expires_at <= current_time then 1
+        when public.api_rate_limits.expires_at <= v_now then 1
         else public.api_rate_limits.request_count + 1
       end,
       window_started_at = case
-        when public.api_rate_limits.expires_at <= current_time then current_time
+        when public.api_rate_limits.expires_at <= v_now then v_now
         else public.api_rate_limits.window_started_at
       end,
       expires_at = case
-        when public.api_rate_limits.expires_at <= current_time then current_time + make_interval(secs => window_seconds)
+        when public.api_rate_limits.expires_at <= v_now then v_now + make_interval(secs => window_seconds)
         else public.api_rate_limits.expires_at
       end,
-      updated_at = current_time
+      updated_at = v_now
   returning * into current_row;
 
   return query select
     current_row.request_count <= rate_limit,
     greatest(rate_limit - current_row.request_count, 0),
-    greatest(ceil(extract(epoch from (current_row.expires_at - current_time)))::integer, 0);
+    greatest(ceil(extract(epoch from (current_row.expires_at - v_now)))::integer, 0);
 end;
 $$;
 
