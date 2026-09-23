@@ -28,6 +28,46 @@
 
   const MAX_STORED_MESSAGES = 24;
   const MAX_VISIBLE_SOURCES = 3;
+  const BRAND_LOGO_URL =
+    'https://media.loveitopcdn.com/41744/logo.png';
+
+  /*
+   * Bootstrap Icons 1.13.1 dạng SVG nội tuyến.
+   * Không dùng icon font để tránh ô vuông trong Shadow DOM/CSP.
+   */
+  const BOOTSTRAP_ICONS = {
+    'chat-dots-fill': '<path d="M16 8c0 3.866-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7M5 8a1 1 0 1 0-2 0 1 1 0 0 0 2 0m4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>',
+    'x-lg': '<path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>',
+    'dash-lg': '<path fill-rule="evenodd" d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8"/>',
+    'telephone-fill': '<path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/>',
+    'envelope-fill': '<path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414zM0 4.697v7.104l5.803-3.558zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586zm3.436-.586L16 11.801V4.697z"/>',
+    'send-fill': '<path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/>',
+    'shield-check': '<path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/><path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/>',
+    'stars': '<path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>',
+    'journal-check': '<path fill-rule="evenodd" d="M10.854 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708 0"/><path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/><path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/>',
+    'arrow-up-right': '<path fill-rule="evenodd" d="M14 2.5a.5.5 0 0 0-.5-.5h-6a.5.5 0 0 0 0 1h4.793L2.146 13.146a.5.5 0 0 0 .708.708L13 3.707V8.5a.5.5 0 0 0 1 0z"/>',
+    'chat-square-text': '<path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2.5a2 2 0 0 0-1.6.8L8 14.333 6.1 11.8a2 2 0 0 0-1.6-.8H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6m0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/>',
+    'tags': '<path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/><path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1z"/>',
+    'house-door': '<path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/>',
+    'buildings': '<path d="M14.763.075A.5.5 0 0 1 15 .5v15a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V14h-1v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V10a.5.5 0 0 1 .342-.474L6 7.64V4.5a.5.5 0 0 1 .276-.447l8-4a.5.5 0 0 1 .487.022M6 8.694 1 10.36V15h5zM7 15h2v-1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5V15h2V1.309l-7 3.5z"/><path d="M2 11h1v1H2zm2 0h1v1H4zm-2 2h1v1H2zm2 0h1v1H4zm4-4h1v1H8zm2 0h1v1h-1zm-2 2h1v1H8zm2 0h1v1h-1zm2-2h1v1h-1zm0 2h1v1h-1zM8 7h1v1H8zm2 0h1v1h-1zm2 0h1v1h-1zM8 5h1v1H8zm2 0h1v1h-1zm2 0h1v1h-1zm0-2h1v1h-1z"/>',
+    'droplet-half': '<path fill-rule="evenodd" d="M7.21.8C7.69.295 8 0 8 0q.164.544.371 1.038c.812 1.946 2.073 3.35 3.197 4.6C12.878 7.096 14 8.345 14 10a6 6 0 0 1-12 0C2 6.668 5.58 2.517 7.21.8m.413 1.021A31 31 0 0 0 5.794 3.99c-.726.95-1.436 2.008-1.96 3.07C3.304 8.133 3 9.138 3 10c0 0 2.5 1.5 5 .5s5-.5 5-.5c0-1.201-.796-2.157-2.181-3.7l-.03-.032C9.75 5.11 8.5 3.72 7.623 1.82z"/><path fill-rule="evenodd" d="M4.553 7.776c.82-1.641 1.717-2.753 2.093-3.13l.708.708c-.29.29-1.128 1.311-1.907 2.87z"/>',
+    'headset': '<path d="M8 1a5 5 0 0 0-5 5v1h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a6 6 0 1 1 12 0v6a2.5 2.5 0 0 1-2.5 2.5H9.366a1 1 0 0 1-.866.5h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 .866.5H11.5A1.5 1.5 0 0 0 13 12h-1a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h1V6a5 5 0 0 0-5-5"/>',
+    'telephone': '<path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/>',
+    'plus-circle': '<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>',
+    'person-lines-fill': '<path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zM11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m.5 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1zm2 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1z"/>',
+    'person': '<path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>',
+    'card-text': '<path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z"/><path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8m0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5"/>',
+    'arrow-left': '<path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>',
+    'send-check': '<path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855a.75.75 0 0 0-.124 1.329l4.995 3.178 1.531 2.406a.5.5 0 0 0 .844-.536L6.637 10.07l7.494-7.494-1.895 4.738a.5.5 0 1 0 .928.372zm-2.54 1.183L5.93 9.363 1.591 6.602z"/><path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-1.993-1.679a.5.5 0 0 0-.686.172l-1.17 1.95-.547-.547a.5.5 0 0 0-.708.708l.774.773a.75.75 0 0 0 1.174-.144l1.335-2.226a.5.5 0 0 0-.172-.686"/>'
+  };
+
+  function bootstrapIcon(name) {
+    const paths =
+      BOOTSTRAP_ICONS[name] ||
+      BOOTSTRAP_ICONS['chat-square-text'];
+
+    return `<svg class="stb-icon" data-icon="${name}" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">${paths}</svg>`;
+  }
 
   const host = document.createElement('div');
   host.id = 'stb-ai-chatbot';
@@ -40,8 +80,6 @@
   const style = document.createElement('style');
 
   style.textContent = `
-    @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
-
     :host {
       all: initial;
     }
@@ -857,21 +895,29 @@
       outline-offset: 3px;
     }
 
-    .stb-launch .bi-chat-dots-fill,
-    .stb-launch .bi-x-lg {
+    .stb-icon {
+      width: 1em;
+      height: 1em;
+      display: inline-block;
+      flex: none;
+      vertical-align: -.125em;
+    }
+
+    .stb-launch [data-icon="chat-dots-fill"],
+    .stb-launch [data-icon="x-lg"] {
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .18));
     }
 
-    .stb-launch .bi-x-lg {
+    .stb-launch [data-icon="x-lg"] {
       display: none;
       font-size: 23px;
     }
 
-    .stb-wrap.is-open .stb-launch .bi-chat-dots-fill {
+    .stb-wrap.is-open .stb-launch .stb-launch-logo {
       display: none;
     }
 
-    .stb-wrap.is-open .stb-launch .bi-x-lg {
+    .stb-wrap.is-open .stb-launch [data-icon="x-lg"] {
       display: inline-block;
     }
 
@@ -933,6 +979,51 @@
       box-shadow: 0 8px 22px rgba(0, 35, 24, .2);
       color: var(--stb-green-800);
       font-size: 21px;
+      overflow: hidden;
+    }
+
+    .stb-brand-mark,
+    .stb-launch-logo {
+      position: relative;
+      overflow: hidden;
+      background: #ff8000;
+    }
+
+    .stb-brand-mark::before,
+    .stb-launch-logo::before {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      content: "TB";
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .stb-brand-mark {
+      position: absolute;
+      inset: 0;
+    }
+
+    .stb-brand-mark img,
+    .stb-launch-logo img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: auto;
+      max-width: none;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    .stb-launch-logo {
+      width: 45px;
+      height: 45px;
+      border: 2px solid rgba(255, 255, 255, .88);
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
     }
 
     .stb-avatar-status {
@@ -1013,7 +1104,7 @@
     .stb-contact-zalo { background: #086bf1; }
     .stb-contact-call { border-color: #f2ddb2 !important; background: #fff8e9; color: #825100; }
     .stb-contact-email { border-color: #dce5f2 !important; background: #f3f7fc; color: #28517d; }
-    .stb-contact .bi { font-size: 14px; }
+    .stb-contact .stb-icon { font-size: 14px; }
 
     .stb-body {
       padding: 17px 14px 20px;
@@ -1096,7 +1187,7 @@
 
     .stb-source::after { content: none; }
     .stb-source:hover { transform: translateY(-1px); }
-    .stb-source .bi { flex: none; font-size: 13px; }
+    .stb-source .stb-icon { flex: none; font-size: 13px; }
 
     .stb-quick {
       grid-template-columns: 1fr 1fr;
@@ -1119,7 +1210,7 @@
       transition: transform .17s ease, border-color .17s ease, box-shadow .17s ease, background .17s ease;
     }
 
-    .stb-chip .bi {
+    .stb-chip .stb-icon {
       width: 25px;
       height: 25px;
       flex: 0 0 25px;
@@ -1155,11 +1246,11 @@
       font-size: 14.5px;
     }
 
-    .stb-lead-title .bi { color: var(--stb-green-700); }
+    .stb-lead-title .stb-icon { color: var(--stb-green-700); }
     .stb-lead-badge { padding: 6px 8px; background: var(--stb-green-100); }
     .stb-form-group { gap: 6px; }
     .stb-label { display: flex; align-items: center; gap: 6px; }
-    .stb-label .bi { color: #6f8278; font-size: 12px; }
+    .stb-label .stb-icon { color: #6f8278; font-size: 12px; }
 
     .stb-field {
       min-height: 42px;
@@ -1318,7 +1409,9 @@
 
       <header class="stb-head">
         <div class="stb-avatar" aria-hidden="true">
-          <i class="bi bi-stars"></i>
+          <span class="stb-brand-mark">
+            <img src="${BRAND_LOGO_URL}" alt="">
+          </span>
           <span class="stb-avatar-status"></span>
         </div>
 
@@ -1337,7 +1430,7 @@
           class="stb-close"
           type="button"
           aria-label="Đóng chatbot">
-          <i class="bi bi-dash-lg" aria-hidden="true"></i>
+          ${bootstrapIcon('dash-lg')}
         </button>
       </header>
 
@@ -1348,7 +1441,7 @@
           href="https://zalo.me/0913712195"
           target="_blank"
           rel="noopener noreferrer">
-          <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
+          ${bootstrapIcon('chat-dots-fill')}
           <span>Zalo</span>
         </a>
 
@@ -1356,7 +1449,7 @@
           class="stb-contact-call"
           data-director-call
           href="tel:0913712195">
-          <i class="bi bi-telephone-fill" aria-hidden="true"></i>
+          ${bootstrapIcon('telephone-fill')}
           <span>Gọi ngay</span>
         </a>
 
@@ -1364,7 +1457,7 @@
           class="stb-contact-email"
           data-company-email
           href="mailto:ctytienbao@gmail.com">
-          <i class="bi bi-envelope-fill" aria-hidden="true"></i>
+          ${bootstrapIcon('envelope-fill')}
           <span>Email</span>
         </a>
       </div>
@@ -1389,12 +1482,12 @@
             type="button"
             aria-label="Gửi tin nhắn">
 
-            <i class="bi bi-send-fill" aria-hidden="true"></i>
+            ${bootstrapIcon('send-fill')}
           </button>
         </div>
 
         <div class="stb-note">
-          <i class="bi bi-shield-check" aria-hidden="true"></i>
+          ${bootstrapIcon('shield-check')}
           AI tư vấn 24/7 • Nhân viên xác nhận báo giá
         </div>
       </footer>
@@ -1409,8 +1502,10 @@
 
       <span class="stb-badge"></span>
 
-      <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
-      <i class="bi bi-x-lg" aria-hidden="true"></i>
+      <span class="stb-launch-logo" aria-hidden="true">
+        <img src="${BRAND_LOGO_URL}" alt="">
+      </span>
+      ${bootstrapIcon('x-lg')}
     </button>
   `;
 
@@ -1530,19 +1625,19 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
       zaloValue();
 
     directorZaloLink.innerHTML =
-      '<i class="bi bi-chat-dots-fill" aria-hidden="true"></i><span>Zalo</span>';
+      `${bootstrapIcon('chat-dots-fill')}<span>Zalo</span>`;
 
     directorCallLink.href =
       `tel:${phone}`;
 
     directorCallLink.innerHTML =
-      '<i class="bi bi-telephone-fill" aria-hidden="true"></i><span>Gọi ngay</span>';
+      `${bootstrapIcon('telephone-fill')}<span>Gọi ngay</span>`;
 
     companyEmailLink.href =
       `mailto:${email}`;
 
     companyEmailLink.innerHTML =
-      '<i class="bi bi-envelope-fill" aria-hidden="true"></i><span>Email</span>';
+      `${bootstrapIcon('envelope-fill')}<span>Email</span>`;
 
     companyEmailLink.title = email;
   }
@@ -1680,7 +1775,7 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
       );
 
       avatar.innerHTML =
-        '<i class="bi bi-stars"></i>';
+        bootstrapIcon('stars');
 
       row.appendChild(avatar);
     }
@@ -1738,7 +1833,7 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
         'stb-sources-title';
 
       sourceTitle.innerHTML =
-        '<i class="bi bi-journal-check" aria-hidden="true"></i><span>Nguồn tham khảo</span>';
+        `${bootstrapIcon('journal-check')}<span>Nguồn tham khảo</span>`;
 
       sourceBox.appendChild(
         sourceTitle
@@ -1765,18 +1860,13 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
             source.title ||
             'Xem thông tin trên sontienbao.com';
 
-          const icon =
-            document.createElement('i');
-
-          icon.className =
-            'bi bi-arrow-up-right';
-
-          icon.setAttribute(
-            'aria-hidden',
-            'true'
+          link.appendChild(label);
+          link.insertAdjacentHTML(
+            'beforeend',
+            bootstrapIcon(
+              'arrow-up-right'
+            )
           );
-
-          link.append(label, icon);
 
           sourceBox.appendChild(link);
         }
@@ -1839,40 +1929,33 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
           String(label).toLowerCase();
 
         let iconName =
-          'bi-chat-square-text';
+          'chat-square-text';
 
         if (normalized.includes('sản phẩm') || normalized.includes('bảng giá')) {
-          iconName = 'bi-tags';
+          iconName = 'tags';
         } else if (normalized.includes('nội thất')) {
-          iconName = 'bi-house-door';
+          iconName = 'house-door';
         } else if (normalized.includes('ngoại thất')) {
-          iconName = 'bi-buildings';
+          iconName = 'buildings';
         } else if (normalized.includes('chống thấm')) {
-          iconName = 'bi-droplet-half';
+          iconName = 'droplet-half';
         } else if (normalized.includes('trực tiếp') || normalized.includes('zalo')) {
-          iconName = 'bi-headset';
+          iconName = 'headset';
         } else if (normalized.includes('gọi')) {
-          iconName = 'bi-telephone';
+          iconName = 'telephone';
         } else if (normalized.includes('hỏi thêm')) {
-          iconName = 'bi-plus-circle';
+          iconName = 'plus-circle';
         }
-
-        const icon =
-          document.createElement('i');
-
-        icon.className =
-          `bi ${iconName}`;
-
-        icon.setAttribute(
-          'aria-hidden',
-          'true'
-        );
 
         const labelText =
           document.createElement('span');
 
         labelText.textContent = label;
-        button.append(icon, labelText);
+        button.insertAdjacentHTML(
+          'beforeend',
+          bootstrapIcon(iconName)
+        );
+        button.appendChild(labelText);
 
         button.addEventListener(
           'click',
@@ -1898,7 +1981,7 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
 
     row.innerHTML = `
       <span class="stb-message-avatar" aria-hidden="true">
-        <i class="bi bi-stars"></i>
+        ${bootstrapIcon('stars')}
       </span>
       <div class="stb-bubble">
         <span class="stb-typing">
@@ -2069,7 +2152,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
       'noopener noreferrer';
 
     zalo.innerHTML =
-      '<i class="bi bi-chat-dots-fill" aria-hidden="true"></i><span>Chat Zalo</span>';
+      `${bootstrapIcon('chat-dots-fill')}<span>Chat Zalo</span>`;
 
     const call =
       document.createElement('a');
@@ -2079,7 +2162,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
 
     call.href = `tel:${phone}`;
     call.innerHTML =
-      '<i class="bi bi-telephone-fill" aria-hidden="true"></i><span>Gọi ngay</span>';
+      `${bootstrapIcon('telephone-fill')}<span>Gọi ngay</span>`;
 
     actions.append(zalo, call);
     body.appendChild(actions);
@@ -2104,7 +2187,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
       <div class="stb-lead-head">
         <div>
           <div class="stb-lead-title">
-            <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+            ${bootstrapIcon('person-lines-fill')}
             Nhận tư vấn và báo giá
           </div>
 
@@ -2123,7 +2206,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
       <div class="stb-form-grid">
         <label class="stb-form-group">
           <span class="stb-label">
-            <i class="bi bi-person" aria-hidden="true"></i>
+            ${bootstrapIcon('person')}
             Họ và tên
             <span class="stb-required">
               *
@@ -2141,7 +2224,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
 
         <label class="stb-form-group">
           <span class="stb-label">
-            <i class="bi bi-telephone" aria-hidden="true"></i>
+            ${bootstrapIcon('telephone')}
             Số điện thoại
             <span class="stb-required">
               *
@@ -2160,7 +2243,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
 
         <label class="stb-form-group">
           <span class="stb-label">
-            <i class="bi bi-card-text" aria-hidden="true"></i>
+            ${bootstrapIcon('card-text')}
             Nhu cầu cần tư vấn
             <span class="stb-required">
               *
@@ -2205,14 +2288,14 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
         <button
           class="stb-secondary"
           type="button">
-          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+          ${bootstrapIcon('arrow-left')}
           Để sau
         </button>
 
         <button
           class="stb-primary"
           type="submit">
-          <i class="bi bi-send-check" aria-hidden="true"></i>
+          ${bootstrapIcon('send-check')}
           Gửi yêu cầu
         </button>
       </div>
@@ -2356,7 +2439,7 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
         } catch (error) {
           submit.disabled = false;
           submit.innerHTML =
-            '<i class="bi bi-send-check" aria-hidden="true"></i><span>Gửi yêu cầu</span>';
+            `${bootstrapIcon('send-check')}<span>Gửi yêu cầu</span>`;
 
           showFormError(
             error instanceof Error
