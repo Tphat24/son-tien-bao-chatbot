@@ -35,13 +35,16 @@ const productColumns = 'id,sku,name,brand,category,description,use_case,coverage
 
 const STOP_WORDS = new Set([
   'toi', 'can', 'cho', 'giup', 'tu', 'van', 've', 'co', 'khong', 'nhu', 'the', 'nao', 'anh', 'chi', 'em',
-  'la', 'mot', 'cac', 'loai', 'san', 'pham', 'muon', 'hoi', 'hay', 'duoc', 'va', 'voi', 'de', 'dung'
+  'la', 'mot', 'cac', 'loai', 'san', 'son', 'pham', 'muon', 'hoi', 'hay', 'duoc', 'va', 'voi', 'de', 'dung',
+  'khi', 'nha',
+  'tot', 'thuong', 'xuyen', 'bi', 'giu', 'mau', 'nang'
 ]);
 
 const QUERY_EXPANSIONS: Record<string, string[]> = {
   'noi that': ['trong nha', 'phong ngu', 'phong khach', 'essence', 'majestic', 'jotaplast', 'easy wash', 'odour less'],
   'ngoai that': ['ngoai troi', 'mat tien', 'tough shield', 'jotashield'],
   'ben mau': ['chong phai mau', 'ngoai that', 'jotashield', 'tia uv'],
+  'giu mau': ['ben mau', 'chong phai mau', 'ngoai that', 'jotashield', 'tia uv'],
   'phai mau': ['ben mau', 'ngoai that', 'jotashield', 'tia uv'],
   'nang': ['tia uv', 'chong phai mau', 'ben mau', 'ngoai that'],
   'chong tham': ['tham nuoc', 'ro ri', 'waterproof'],
@@ -99,9 +102,8 @@ export function queryTerms(query: string): string[] {
   for (const [phrase, expansions] of Object.entries(QUERY_EXPANSIONS)) {
     if (normalized.includes(phrase)) {
       for (const expansion of expansions) {
-        for (const term of normalizeText(expansion).split(' ')) {
-          if (term.length > 1) result.add(term);
-        }
+        const normalizedExpansion = normalizeText(expansion);
+        if (normalizedExpansion.length > 1) result.add(normalizedExpansion);
       }
     }
   }
