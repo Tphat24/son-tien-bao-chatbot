@@ -7,6 +7,70 @@ import { withTimeout } from '../utils/async.js';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
+type AiError = {
+  status?: number;
+  name?: string;
+  message?: string;
+};
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+export function isRetryableAiError(error: unknown): boolean {
+  const candidate = error as AiError;
+  return candidate?.name === 'TimeoutError'
+    || candidate?.status === 408
+    || candidate?.status === 429
+    || candidate?.status === 500
+    || candidate?.status === 502
+    || candidate?.status === 503
+    || candidate?.status === 504
+    || /RESOURCE_EXHAUSTED|UNAVAILABLE|timed out|fetch failed/i.test(candidate?.message ?? '');
+}
+
+export function modelCandidates(primary: string, fallbackList: string): string[] {
+  return [...new Set([primary, ...fallbackList.split(',').map((model) => model.trim()).filter(Boolean)])];
+}
+
+async function generateContentResilient(prompt: string): Promise<string> {
+  const models = modelCandidates(env.GEMINI_MODEL, env.GEMINI_FALLBACK_MODELS);
+  const deadline = Date.now() + env.AI_FAILOVER_BUDGET_MS;
+  let lastError: unknown;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const remainingMs = deadline - Date.now();
+      if (remainingMs < 1_000) break;
+      const attemptTimeoutMs = Math.min(env.AI_MODEL_ATTEMPT_TIMEOUT_MS, remainingMs);
+      try {
+        const response = await withTimeout(
+          ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              abortSignal: AbortSignal.timeout(attemptTimeoutMs),
+              temperature: 0.25,
+              maxOutputTokens: 420,
+              thinkingConfig: { thinkingBudget: 0 }
+            }
+          }),
+          attemptTimeoutMs
+        );
+        return response.text?.trim() || '';
+      } catch (error) {
+        lastError = error;
+        if (!isRetryableAiError(error)) throw error;
+        console.warn(`Gemini model ${model} failed transiently (attempt ${attempt + 1}); trying again or falling back.`);
+        const delayMs = Math.min(env.AI_RETRY_BASE_DELAY_MS * 2 ** attempt, Math.max(0, deadline - Date.now() - 1_000));
+        if (delayMs > 0) await wait(delayMs);
+      }
+    }
+  }
+
+  throw lastError ?? new Error('No Gemini model was available within the failover budget');
+}
+
 function cleanReply(value: string): string {
   return clip(
     value
@@ -94,15 +158,6 @@ Tin nhắn mới: ${input.userText}
 
 Hãy viết duy nhất nội dung trả lời gửi cho khách.`;
 
-  const response = await withTimeout(
-    ai.models.generateContent({
-      model: env.GEMINI_MODEL,
-      contents: prompt,
-      config: { temperature: 0.25, maxOutputTokens: 420 }
-    }),
-    env.AI_TIMEOUT_MS
-  );
-
-  const answer = cleanReply(response.text?.trim() || '');
+  const answer = cleanReply(await generateContentResilient(prompt));
   return answer || noDataReply();
 }

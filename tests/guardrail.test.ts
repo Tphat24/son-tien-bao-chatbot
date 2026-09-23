@@ -1,7 +1,7 @@
 import './_setup-env.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { generateSafeReply } from '../src/services/ai.service.js';
+import { generateSafeReply, isRetryableAiError, modelCandidates } from '../src/services/ai.service.js';
 import { buildImageReply, conditionLabel, type VisionResult } from '../src/services/vision.service.js';
 
 /**
@@ -56,4 +56,18 @@ test('conditionLabel: nhãn lạ (AI bịa) trả về nguyên trạng, không c
   assert.equal(conditionLabel('tham_nuoc'), 'Ẩm / thấm nước / ố');
   // Nhãn không thuộc danh sách đóng => trả nguyên key, không tự chế mô tả.
   assert.equal(conditionLabel('san_pham_sieu_ben'), 'san_pham_sieu_ben');
+});
+
+test('AI failover chỉ retry lỗi quota, quá tải, timeout và lỗi mạng tạm thời', () => {
+  assert.equal(isRetryableAiError({ status: 503 }), true);
+  assert.equal(isRetryableAiError({ status: 429 }), true);
+  assert.equal(isRetryableAiError(new Error('fetch failed')), true);
+  assert.equal(isRetryableAiError({ status: 400 }), false);
+});
+
+test('AI failover loại model trùng và giữ đúng thứ tự ưu tiên', () => {
+  assert.deepEqual(
+    modelCandidates('gemini-primary', 'gemini-backup, gemini-primary,gemini-last'),
+    ['gemini-primary', 'gemini-backup', 'gemini-last']
+  );
 });
