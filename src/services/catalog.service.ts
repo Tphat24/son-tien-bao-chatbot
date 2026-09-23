@@ -41,6 +41,9 @@ const STOP_WORDS = new Set([
 const QUERY_EXPANSIONS: Record<string, string[]> = {
   'noi that': ['trong nha', 'phong ngu', 'phong khach', 'essence', 'majestic', 'jotaplast', 'easy wash', 'odour less'],
   'ngoai that': ['ngoai troi', 'mat tien', 'tough shield', 'jotashield'],
+  'ben mau': ['chong phai mau', 'ngoai that', 'jotashield', 'tia uv'],
+  'phai mau': ['ben mau', 'ngoai that', 'jotashield', 'tia uv'],
+  'nang': ['tia uv', 'chong phai mau', 'ben mau', 'ngoai that'],
   'chong tham': ['tham nuoc', 'ro ri', 'waterproof'],
   'son lot': ['primer', 'lot khang kiem'],
   'bot tret': ['bot ba', 'putty', 'ba matit'],
@@ -74,7 +77,7 @@ export type QueryIntent =
 export function detectQueryIntent(query: string): QueryIntent {
   const value = normalizeText(query);
   if (/noi that|trong nha|phong ngu|phong khach/.test(value)) return 'interior';
-  if (/ngoai that|ngoai troi|mat tien/.test(value)) return 'exterior';
+  if (/ngoai that|ngoai troi|mat tien|ben mau|phai mau|tia uv|thuong xuyen.*nang/.test(value)) return 'exterior';
   if (/chong tham|tham nuoc|ro ri/.test(value)) return 'waterproof';
   if (/son lot|primer|khang kiem/.test(value)) return 'primer';
   if (/bot tret|bot ba|putty|ba matit/.test(value)) return 'putty';
@@ -123,7 +126,7 @@ function intentBoost(value: string, intent: QueryIntent, strongField = false): n
     case 'interior':
       return multiplier * ((/noi that|trong nha|phong ngu|phong khach/.test(value) ? 18 : 0) - (/ngoai that|san the thao|kim loai|son go|cong nghiep/.test(value) ? 24 : 0));
     case 'exterior':
-      return multiplier * ((/ngoai that|ngoai troi|mat tien/.test(value) ? 18 : 0) - (/noi that|san the thao/.test(value) ? 20 : 0));
+      return multiplier * ((/ngoai that|ngoai troi|mat tien|ben mau|phai mau|tia uv|jotashield/.test(value) ? 18 : 0) - (/noi that|san the thao|son ngoi/.test(value) ? 20 : 0));
     case 'waterproof':
       return multiplier * ((/chong tham|tham nuoc|waterproof/.test(value) ? 20 : 0) - (/san the thao/.test(value) ? 10 : 0));
     case 'primer':

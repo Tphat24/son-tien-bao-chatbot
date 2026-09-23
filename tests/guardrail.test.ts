@@ -1,7 +1,7 @@
 import './_setup-env.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { generateSafeReply, isRetryableAiError, modelCandidates } from '../src/services/ai.service.js';
+import { cleanReply, generateSafeReply, isRetryableAiError, modelCandidates } from '../src/services/ai.service.js';
 import { buildImageReply, conditionLabel, type VisionResult } from '../src/services/vision.service.js';
 
 /**
@@ -70,4 +70,10 @@ test('AI failover loại model trùng và giữ đúng thứ tự ưu tiên', ()
     modelCandidates('gemini-primary', 'gemini-backup, gemini-primary,gemini-last'),
     ['gemini-primary', 'gemini-backup', 'gemini-last']
   );
+});
+
+test('cleanReply cắt câu dài tại ranh giới câu, không để câu trả lời dang dở', () => {
+  const reply = cleanReply(`${'Nội dung tư vấn đầy đủ. '.repeat(28)}Câu cuối đang viết dở và còn rất dài ${'x'.repeat(300)}`);
+  assert.ok(reply.length <= 760);
+  assert.match(reply, /[.!?]$/);
 });
