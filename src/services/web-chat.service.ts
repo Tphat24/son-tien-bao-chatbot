@@ -80,7 +80,14 @@ export async function answerWebMessage(input: {
     content: reply
   });
 
-  const sources: WebChatSource[] = [];
+  const sources = uniqueSources([
+    ...context.products
+      .filter((product) => Boolean(product.source_url))
+      .map((product) => ({ title: product.name, url: product.source_url!, type: 'product' as const })),
+    ...context.knowledge
+      .filter((document) => Boolean(document.source_url))
+      .map((document) => ({ title: document.title, url: document.source_url!, type: 'document' as const }))
+  ]);
 
   return {
     reply,

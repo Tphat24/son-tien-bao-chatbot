@@ -2,6 +2,7 @@ import { env } from '../config/env.js';
 import { normalizeText } from '../utils/text.js';
 import { detectQueryIntent, searchKnowledge, searchProducts, type KnowledgeRow, type ProductRow } from './catalog.service.js';
 import { searchWebsiteLive } from './website-retrieval.service.js';
+import { searchKnowledgeVector } from './rag.service.js';
 
 export type AdvisorContext = {
   products: ProductRow[];
@@ -35,17 +36,21 @@ function policyHandoff(query: string): { forceHuman: boolean; reason?: string } 
 }
 
 export async function retrieveAdvisorContext(query: string): Promise<AdvisorContext> {
-  const [products, indexedKnowledge] = await Promise.all([
+  const [products, indexedKnowledge, vectorKnowledge] = await Promise.all([
     searchProducts(query),
-    searchKnowledge(query, env.AI_MAX_KNOWLEDGE_DOCS)
+    searchKnowledge(query, env.AI_MAX_KNOWLEDGE_DOCS),
+    searchKnowledgeVector(query, { limit: env.RAG_TOP_K }).catch((error) => {
+      console.warn('RAG vector retrieval unavailable; using lexical fallback:', error instanceof Error ? error.message : error);
+      return [];
+    })
   ]);
 
   let liveKnowledge: KnowledgeRow[] = [];
-  if (indexedKnowledge.length < Math.min(2, env.AI_MAX_KNOWLEDGE_DOCS)) {
+  if (indexedKnowledge.length + vectorKnowledge.length < Math.min(2, env.AI_MAX_KNOWLEDGE_DOCS)) {
     liveKnowledge = await searchWebsiteLive(query);
   }
 
-  const knowledge = uniqueKnowledge([...indexedKnowledge, ...liveKnowledge]);
+  const knowledge = uniqueKnowledge([...vectorKnowledge, ...indexedKnowledge, ...liveKnowledge]);
   const policy = policyHandoff(query);
   const intent = detectQueryIntent(query);
   const hasEvidence = products.length > 0 || knowledge.length > 0;

@@ -22,10 +22,13 @@ export interface ProductRow {
 }
 
 export interface KnowledgeRow {
+  id?: string;
   title: string;
   content: string;
   source_url: string | null;
   approval_status?: string | null;
+  retrieval_score?: number;
+  chunk_id?: string;
 }
 
 const productColumns = 'id,sku,name,brand,category,description,use_case,coverage_text,coverage_min,coverage_max,recommended_coats,package_text,package_sizes,price,image_url,source_url';

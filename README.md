@@ -7,6 +7,7 @@ Chatbot AI gắn trực tiếp vào `sontienbao.com`. Hệ thống dùng Railway
 - Widget chat nổi, responsive, không phụ thuộc framework của website.
 - Tư vấn chọn sơn theo mục đích: nội thất, ngoại thất, chống thấm, sân thể thao, công nghiệp.
 - Tìm dữ liệu từ bảng `products`, `knowledge_documents` và website Sơn Tiến Bảo.
+- RAG lai (vector + từ khóa) bằng Gemini Embeddings và Supabase `pgvector`, có lọc tenant và fallback an toàn.
 - Ghi nhớ tối đa 8 lượt gần nhất theo phiên trình duyệt.
 - Trả kèm liên kết nguồn sản phẩm/tài liệu.
 - Thu tên, số điện thoại và nhu cầu; lưu vào `leads` với nguồn `website_chatbot`.
@@ -32,6 +33,18 @@ npm install
 npm run check
 npm run dev
 ```
+
+## Khởi tạo RAG doanh nghiệp
+
+1. Chạy `supabase/02_ENTERPRISE_RAG.sql` trong Supabase SQL Editor.
+2. Bảo đảm các tài liệu cần dùng có `approval_status = 'approved'`.
+3. Tạo embedding và lập chỉ mục:
+
+```bash
+npm run rag:index
+```
+
+Có thể truyền tenant khác bằng `npm run rag:index -- TENANT_ID`. Khi chat, hệ thống ưu tiên các đoạn có độ tương đồng vector cao, hợp nhất với kết quả từ khóa hiện có và tự quay về retrieval cũ nếu vector store chưa sẵn sàng.
 
 Mở `http://localhost:3000` để thử widget.
 

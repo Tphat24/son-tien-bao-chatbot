@@ -11,8 +11,9 @@
     "crawl": "tsx scripts/crawl-website.ts",
     "test:dynamic": "tsx scripts/test-dynamic-api.ts",
     "sync:web": "tsx scripts/crawl-website.ts",
+    "rag:index": "tsx scripts/index-rag.ts",
     "seed:admin": "tsx scripts/seed-admin.ts",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --import ./tests/_setup-env.ts --test tests/*.test.ts"
   },
   "engines": {
     "node": ">=24 <25"
