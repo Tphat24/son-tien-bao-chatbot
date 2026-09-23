@@ -216,6 +216,10 @@ const PERMISSION_MATRIX: Record<string, StaffRole[]> = {
   // Hội thoại
   'conversations.read': ['super_admin', 'manager', 'sales', 'technician'],
   'conversations.write': SALES_UP,
+  // Kho tri thức và vận hành RAG
+  'knowledge.read': VIEWER_UP,
+  'knowledge.write': MANAGER_UP,
+  'knowledge.reindex': MANAGER_UP,
   // Cấu hình hệ thống
   'settings:read': MANAGER_UP,
   'settings:write': SUPER_ONLY,

@@ -10,6 +10,14 @@ export type AdvisorContext = {
   usedLiveWebsite: boolean;
   forceHuman: boolean;
   handoffReason?: string;
+  retrieval: {
+    mode: 'hybrid' | 'vector' | 'lexical' | 'live' | 'none';
+    vectorMatches: number;
+    lexicalMatches: number;
+    liveMatches: number;
+    topSimilarity: number | null;
+    vectorError?: string;
+  };
 };
 
 function uniqueKnowledge(documents: KnowledgeRow[]): KnowledgeRow[] {
@@ -36,11 +44,13 @@ function policyHandoff(query: string): { forceHuman: boolean; reason?: string } 
 }
 
 export async function retrieveAdvisorContext(query: string): Promise<AdvisorContext> {
+  let vectorError: string | undefined;
   const [products, indexedKnowledge, vectorKnowledge] = await Promise.all([
     searchProducts(query),
     searchKnowledge(query, env.AI_MAX_KNOWLEDGE_DOCS),
     searchKnowledgeVector(query, { limit: env.RAG_TOP_K }).catch((error) => {
-      console.warn('RAG vector retrieval unavailable; using lexical fallback:', error instanceof Error ? error.message : error);
+      vectorError = error instanceof Error ? error.message : String(error);
+      console.warn('RAG vector retrieval unavailable; using lexical fallback:', vectorError);
       return [];
     })
   ]);
@@ -54,12 +64,29 @@ export async function retrieveAdvisorContext(query: string): Promise<AdvisorCont
   const policy = policyHandoff(query);
   const intent = detectQueryIntent(query);
   const hasEvidence = products.length > 0 || knowledge.length > 0;
+  const mode = vectorKnowledge.length && indexedKnowledge.length
+    ? 'hybrid'
+    : vectorKnowledge.length
+      ? 'vector'
+      : indexedKnowledge.length
+        ? 'lexical'
+        : liveKnowledge.length
+          ? 'live'
+          : 'none';
 
   return {
     products,
     knowledge,
     usedLiveWebsite: liveKnowledge.length > 0,
     forceHuman: policy.forceHuman || (!hasEvidence && intent !== 'general'),
-    handoffReason: policy.reason || (!hasEvidence ? 'Không tìm thấy thông tin xác thực trên website Sơn Tiến Bảo.' : undefined)
+    handoffReason: policy.reason || (!hasEvidence ? 'Không tìm thấy thông tin xác thực trên website Sơn Tiến Bảo.' : undefined),
+    retrieval: {
+      mode,
+      vectorMatches: vectorKnowledge.length,
+      lexicalMatches: indexedKnowledge.length,
+      liveMatches: liveKnowledge.length,
+      topSimilarity: vectorKnowledge.length ? Math.max(...vectorKnowledge.map((item) => item.retrieval_score ?? 0)) : null,
+      ...(vectorError ? { vectorError: vectorError.slice(0, 300) } : {})
+    }
   };
 }

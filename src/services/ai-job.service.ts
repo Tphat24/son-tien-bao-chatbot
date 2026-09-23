@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { env } from '../config/env.js';
 import { db } from '../db/supabase.js';
-import { generateSafeReply } from './ai.service.js';
+import { generateSafeReply, type AiGenerationTelemetry } from './ai.service.js';
 import { saveCachedReply } from './cache.service.js';
 import { appendConversationTurn, getConversationHistory } from './conversation.service.js';
+import { writeDynamicLog } from './request-log.service.js';
 
 export type AiJobRow = {
   id: string;
@@ -59,6 +60,7 @@ async function processAiJob(
   jobId: string,
   input: { userId: string; question: string; userName?: string }
 ): Promise<void> {
+  const started = Date.now();
   await db
     .from('ai_jobs')
     .update({ status: 'processing', updated_at: new Date().toISOString() })
@@ -85,6 +87,7 @@ async function processAiJob(
       content: input.question
     });
 
+    let generation: AiGenerationTelemetry = { model: null, attempts: 0, failovers: 0, durationMs: 0, noData: false };
     const answer = await generateSafeReply({
       userText: input.question,
       userName: input.userName,
@@ -93,7 +96,9 @@ async function processAiJob(
       history,
       forceHuman: context.forceHuman,
       handoffReason: context.handoffReason,
-      usedLiveWebsite: context.usedLiveWebsite
+      usedLiveWebsite: context.usedLiveWebsite,
+      channel: 'zalo',
+      onTelemetry: (value) => { generation = value; }
     });
 
     await Promise.all([
@@ -109,12 +114,21 @@ async function processAiJob(
         content: answer
       })
     ]);
+    await writeDynamicLog({
+      action: 'zalo_ai_job', userId: input.userId, requestPayload: { question: input.question },
+      responsePayload: { telemetry: { retrieval: context.retrieval, generation } },
+      durationMs: Date.now() - started, status: 'success'
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await db
       .from('ai_jobs')
       .update({ status: 'failed', error_message: message.slice(0, 1000), updated_at: new Date().toISOString() })
       .eq('id', jobId);
+    await writeDynamicLog({
+      action: 'zalo_ai_job', userId: input.userId, requestPayload: { question: input.question },
+      durationMs: Date.now() - started, status: 'failed', errorMessage: message
+    });
     throw error;
   }
 }

@@ -45,6 +45,8 @@ test('RBAC: super_admin có mọi quyền quan trọng', () => {
 
 test('RBAC: viewer chỉ được xem, không được sửa', () => {
   assert.equal(hasPermission('viewer', 'product.view'), true);
+  assert.equal(hasPermission('viewer', 'knowledge.read'), true);
+  assert.equal(hasPermission('viewer', 'knowledge.write'), false);
   assert.equal(hasPermission('viewer', 'product.edit'), false);
   assert.equal(hasPermission('viewer', 'leads:write'), false);
   assert.equal(hasPermission('viewer', 'settings:write'), false);
@@ -55,6 +57,13 @@ test('RBAC: sales sửa được lead & báo giá nhưng không quản lý nhân
   assert.equal(hasPermission('sales', 'quotation.manage'), true);
   assert.equal(hasPermission('sales', 'staff.manage'), false);
   assert.equal(hasPermission('sales', 'settings:write'), false);
+  assert.equal(hasPermission('sales', 'knowledge.reindex'), false);
+});
+
+test('RBAC: manager được quản lý và index kho tri thức', () => {
+  assert.equal(hasPermission('manager', 'knowledge.read'), true);
+  assert.equal(hasPermission('manager', 'knowledge.write'), true);
+  assert.equal(hasPermission('manager', 'knowledge.reindex'), true);
 });
 
 test('RBAC: quyền không tồn tại luôn bị từ chối', () => {

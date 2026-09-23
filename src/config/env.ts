@@ -51,6 +51,8 @@ const schema = z.object({
   RAG_EMBED_BATCH_SIZE: z.coerce.number().int().min(1).max(50).default(8),
   RAG_EMBED_DELAY_MS: z.coerce.number().int().min(0).max(10000).default(800),
   RAG_EMBED_TIMEOUT_MS: z.coerce.number().int().min(5000).max(120000).default(30000),
+  RAG_QUERY_CACHE_TTL_MINUTES: z.coerce.number().int().min(1).max(10080).default(1440),
+  RAG_AUTO_INDEX_AFTER_CRAWL: boolString('true'),
   LIVE_WEBSITE_SEARCH_ENABLED: boolString('true'),
   LIVE_WEBSITE_MAX_PAGES: z.coerce.number().int().min(1).max(12).default(8),
   WEBSITE_FETCH_TIMEOUT_MS: z.coerce.number().int().min(1500).max(15000).default(7000),

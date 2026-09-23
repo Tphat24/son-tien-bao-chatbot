@@ -7,6 +7,14 @@ import { withTimeout } from '../utils/async.js';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
+export type AiGenerationTelemetry = {
+  model: string | null;
+  attempts: number;
+  failovers: number;
+  durationMs: number;
+  noData: boolean;
+};
+
 type AiError = {
   status?: number;
   name?: string;
@@ -33,17 +41,20 @@ export function modelCandidates(primary: string, fallbackList: string): string[]
   return [...new Set([primary, ...fallbackList.split(',').map((model) => model.trim()).filter(Boolean)])];
 }
 
-async function generateContentResilient(prompt: string): Promise<string> {
+async function generateContentResilient(prompt: string): Promise<{ text: string; telemetry: AiGenerationTelemetry }> {
   const models = modelCandidates(env.GEMINI_MODEL, env.GEMINI_FALLBACK_MODELS);
   const deadline = Date.now() + env.AI_FAILOVER_BUDGET_MS;
+  const started = Date.now();
   let lastError: unknown;
+  let attempts = 0;
 
-  for (const model of models) {
+  for (const [modelIndex, model] of models.entries()) {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const remainingMs = deadline - Date.now();
       if (remainingMs < 1_000) break;
       const attemptTimeoutMs = Math.min(env.AI_MODEL_ATTEMPT_TIMEOUT_MS, remainingMs);
       try {
+        attempts += 1;
         const response = await withTimeout(
           ai.models.generateContent({
             model,
@@ -57,7 +68,16 @@ async function generateContentResilient(prompt: string): Promise<string> {
           }),
           attemptTimeoutMs
         );
-        return response.text?.trim() || '';
+        return {
+          text: response.text?.trim() || '',
+          telemetry: {
+            model,
+            attempts,
+            failovers: modelIndex,
+            durationMs: Date.now() - started,
+            noData: false
+          }
+        };
       } catch (error) {
         lastError = error;
         if (!isRetryableAiError(error)) throw error;
@@ -99,8 +119,12 @@ export async function generateSafeReply(input: {
   handoffReason?: string;
   usedLiveWebsite?: boolean;
   channel?: 'website' | 'zalo';
+  onTelemetry?: (telemetry: AiGenerationTelemetry) => void;
 }): Promise<string> {
-  if (!input.products.length && !input.knowledge.length) return noDataReply();
+  if (!input.products.length && !input.knowledge.length) {
+    input.onTelemetry?.({ model: null, attempts: 0, failovers: 0, durationMs: 0, noData: true });
+    return noDataReply();
+  }
 
   const context = {
     products: input.products.map((product) => ({
@@ -158,6 +182,8 @@ Tin nhắn mới: ${input.userText}
 
 Hãy viết duy nhất nội dung trả lời gửi cho khách.`;
 
-  const answer = cleanReply(await generateContentResilient(prompt));
+  const generation = await generateContentResilient(prompt);
+  input.onTelemetry?.(generation.telemetry);
+  const answer = cleanReply(generation.text);
   return answer || noDataReply();
 }

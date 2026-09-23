@@ -75,3 +75,18 @@ Dán trước thẻ `</body>` trên website:
 Không đặt API key, Gemini key hoặc Supabase key trong đoạn mã nhúng.
 
 Xem hướng dẫn chi tiết tại `INSTALL_ON_SONTIENBAO.md`.
+# Sơn Tiến Bảo Enterprise Chatbot
+
+Hệ thống tư vấn doanh nghiệp đa kênh (Website và Zalo) sử dụng Hybrid RAG trên Supabase pgvector, Gemini model failover, quản trị tài liệu và quan sát vận hành.
+
+## Lệnh vận hành chính
+
+```bash
+npm run check       # kiểm tra TypeScript
+npm test            # unit/integration tests cục bộ
+npm run sync:web    # crawl website và tự động index phần RAG thay đổi
+npm run rag:index   # index RAG thủ công, có resume theo content hash
+npm run rag:eval    # đánh giá retrieval bằng bộ câu hỏi tiếng Việt
+```
+
+Áp dụng lần lượt các migration trong `supabase/`. Migration `03_OPERATIONS_UPGRADE.sql` bật rate-limit dùng chung giữa nhiều replica, cache query embedding và lịch sử tác vụ index.

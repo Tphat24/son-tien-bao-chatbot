@@ -6,31 +6,20 @@ import { createLead } from '../services/lead.service.js';
 import { writeDynamicLog } from '../services/request-log.service.js';
 import { answerWebMessage } from '../services/web-chat.service.js';
 import { withTimeout } from '../utils/async.js';
+import { consumeRateLimit } from '../services/rate-limit.service.js';
+import { hashText } from '../utils/security.js';
 
 export const webChatRouter = Router();
 
-type RateEntry = { count: number; resetAt: number };
-const rateStore = new Map<string, RateEntry>();
-
 function clientKey(req: import('express').Request): string {
-  const forwarded = req.header('x-forwarded-for')?.split(',')[0]?.trim();
-  return forwarded || req.ip || 'unknown';
+  return hashText(req.ip || req.socket.remoteAddress || 'unknown').slice(0, 32);
 }
 
-function rateLimit(req: import('express').Request, res: import('express').Response, next: import('express').NextFunction): void {
-  const now = Date.now();
-  const key = clientKey(req);
-  const existing = rateStore.get(key);
-  const limit = env.WEB_CHAT_RATE_LIMIT_PER_10_MIN;
-
-  if (!existing || existing.resetAt <= now) {
-    rateStore.set(key, { count: 1, resetAt: now + 10 * 60_000 });
-    next();
-    return;
-  }
-
-  if (existing.count >= limit) {
-    res.setHeader('Retry-After', String(Math.ceil((existing.resetAt - now) / 1000)));
+async function rateLimit(req: import('express').Request, res: import('express').Response, next: import('express').NextFunction): Promise<void> {
+  const decision = await consumeRateLimit(`web-chat:${clientKey(req)}`, env.WEB_CHAT_RATE_LIMIT_PER_10_MIN, 10 * 60);
+  res.setHeader('X-RateLimit-Remaining', String(decision.remaining));
+  if (!decision.allowed) {
+    res.setHeader('Retry-After', String(decision.retryAfterSeconds));
     res.status(429).json({
       error: 'rate_limited',
       message: `Anh/Chị đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau hoặc gọi hotline ${env.COMPANY_HOTLINE}.`
@@ -38,7 +27,6 @@ function rateLimit(req: import('express').Request, res: import('express').Respon
     return;
   }
 
-  existing.count += 1;
   next();
 }
 
@@ -86,8 +74,9 @@ webChatRouter.post('/message', rateLimit, async (req, res) => {
       env.WEB_CHAT_REQUEST_TIMEOUT_MS
     );
 
+    const { telemetry, ...clientResult } = result;
     const response = {
-      ...result,
+      ...clientResult,
       quickReplies: result.handoffRecommended
         ? [ 'Tư vấn trực tiếp', 'Gọi hotline']
         : ['Tư vấn thêm', 'Tính lượng sơn', 'Tư vấn trực tiếp']
@@ -98,7 +87,7 @@ webChatRouter.post('/message', rateLimit, async (req, res) => {
       action: 'web_chat_message',
       userId: parsed.data.sessionId,
       requestPayload: { message: parsed.data.message, userName: parsed.data.userName },
-      responsePayload: response,
+      responsePayload: { ...response, telemetry },
       durationMs: Date.now() - started,
       status: 'success'
     }).catch(() => undefined);

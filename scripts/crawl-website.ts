@@ -87,3 +87,10 @@ while (queue.length && visited.size < maxPages) {
 }
 
 console.log(`Done. Indexed ${visited.size} pages from ${origin}. Public company pages were auto-approved.`);
+
+if (env.RAG_ENABLED && env.RAG_AUTO_INDEX_AFTER_CRAWL) {
+  console.log('Starting incremental RAG indexing...');
+  const { indexApprovedKnowledge } = await import('../src/services/rag.service.js');
+  const result = await indexApprovedKnowledge();
+  console.log(`RAG indexing complete: ${result.documents} documents, ${result.chunks} new chunks, ${result.skipped} unchanged, ${result.pruned} stale chunks removed.`);
+}

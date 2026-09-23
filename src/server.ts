@@ -15,9 +15,11 @@ import { colorRouter } from './routes/color.routes.js';
 import { quotationRouter } from './routes/quotation.routes.js';
 import { leadAdminRouter } from './routes/lead-admin.routes.js';
 import { settingsRouter } from './routes/settings.routes.js';
+import { knowledgeAdminRouter } from './routes/knowledge-admin.routes.js';
 
 const app = express();
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }
@@ -39,8 +41,8 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'son-tien-bao-smart-advisor-v5-brain', version: '5.0.1', time: new Date().toISOString() }));
-app.get('/version', (_req, res) => res.json({ version: '5.0.1', build: 'v5-brain-compact-ui' }));
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'son-tien-bao-enterprise-rag', version: '6.1.0', time: new Date().toISOString() }));
+app.get('/version', (_req, res) => res.json({ version: '6.1.0', build: 'enterprise-rag-operations' }));
 app.use('/api/web-chat', webChatRouter);
 app.use('/api/zalo-chatbot', zaloChatbotRouter);
 app.use('/api/zalo-bot', zaloBotRouter);
@@ -51,6 +53,7 @@ app.use('/api/admin/products', productAdminRouter);
 app.use('/api/admin/quotations', quotationRouter);
 app.use('/api/admin/leads', leadAdminRouter);
 app.use('/api/admin/settings', settingsRouter);
+app.use('/api/admin/knowledge', knowledgeAdminRouter);
 
 app.use('/api/colors', colorRouter);
 
@@ -71,5 +74,5 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
 });
 
 app.listen(env.PORT, '0.0.0.0', () => {
-  console.log(`Sơn Tiến Bảo v5 Brain + Compact UI running on 0.0.0.0:${env.PORT}`);
+  console.log(`Sơn Tiến Bảo Enterprise RAG v6.1.0 running on 0.0.0.0:${env.PORT}`);
 });

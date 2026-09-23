@@ -43,7 +43,9 @@ const QUERY_EXPANSIONS: Record<string, string[]> = {
   'ngoai that': ['ngoai troi', 'mat tien', 'tough shield', 'jotashield'],
   'chong tham': ['tham nuoc', 'ro ri', 'waterproof'],
   'son lot': ['primer', 'lot khang kiem'],
-  'bot tret': ['putty', 'ba matit'],
+  'bot tret': ['bot ba', 'putty', 'ba matit'],
+  'bot ba': ['bot tret', 'putty', 'ba matit'],
+  'dinh muc': ['do phu', 'coverage', 'm2 lit'],
   'nam moc': ['reu moc', 'moc tuong'],
   'bong troc': ['phan hoa', 'troc son'],
   'kim loai': ['sat', 'thep', 'metal'],
@@ -75,7 +77,7 @@ export function detectQueryIntent(query: string): QueryIntent {
   if (/ngoai that|ngoai troi|mat tien/.test(value)) return 'exterior';
   if (/chong tham|tham nuoc|ro ri/.test(value)) return 'waterproof';
   if (/son lot|primer|khang kiem/.test(value)) return 'primer';
-  if (/bot tret|putty|ba matit/.test(value)) return 'putty';
+  if (/bot tret|bot ba|putty|ba matit/.test(value)) return 'putty';
   if (/kim loai|sat|thep/.test(value)) return 'metal';
   if (/(^|\s)go(\s|$)|son go/.test(value)) return 'wood';
   if (/san the thao|tennis|flexipave|son san|epoxy/.test(value)) return 'floor_sport';
@@ -127,7 +129,7 @@ function intentBoost(value: string, intent: QueryIntent, strongField = false): n
     case 'primer':
       return multiplier * (/son lot|primer|khang kiem/.test(value) ? 18 : 0);
     case 'putty':
-      return multiplier * (/bot tret|putty|ba matit/.test(value) ? 18 : 0);
+      return multiplier * (/bot tret|bot ba|putty|ba matit/.test(value) ? 18 : 0);
     case 'metal':
       return multiplier * ((/kim loai|sat|thep|metal/.test(value) ? 18 : 0) - (/noi that|ngoai that/.test(value) ? 6 : 0));
     case 'wood':

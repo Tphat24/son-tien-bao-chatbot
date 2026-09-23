@@ -1,6 +1,7 @@
 import { env } from '../config/env.js';
 import { retrieveAdvisorContext } from './advisor-context.service.js';
 import { generateSafeReply } from './ai.service.js';
+import type { AiGenerationTelemetry } from './ai.service.js';
 import { appendConversationTurn, getConversationHistory } from './conversation.service.js';
 import { answerPaintCalculationMessage } from './paint-calculator-chat.service.js';
 
@@ -27,6 +28,15 @@ export async function answerWebMessage(input: {
   reply: string;
   sources: WebChatSource[];
   handoffRecommended: boolean;
+  telemetry: {
+    retrievalMode: string;
+    vectorMatches: number;
+    lexicalMatches: number;
+    liveMatches: number;
+    topSimilarity: number | null;
+    vectorError?: string;
+    generation: AiGenerationTelemetry;
+  };
 }> {
   const history = await getConversationHistory(input.sessionId);
   const retrievalQuery = [
@@ -55,11 +65,20 @@ export async function answerWebMessage(input: {
     return {
       reply: calculator.reply,
       sources: [],
-      handoffRecommended: Boolean(calculator.handoffRecommended)
+      handoffRecommended: Boolean(calculator.handoffRecommended),
+      telemetry: {
+        retrievalMode: 'calculator',
+        vectorMatches: 0,
+        lexicalMatches: 0,
+        liveMatches: 0,
+        topSimilarity: null,
+        generation: { model: null, attempts: 0, failovers: 0, durationMs: 0, noData: false }
+      }
     };
   }
 
   const context = await retrieveAdvisorContext(retrievalQuery);
+  let generation: AiGenerationTelemetry = { model: null, attempts: 0, failovers: 0, durationMs: 0, noData: false };
 
   const reply = await generateSafeReply({
     userText: input.message,
@@ -70,7 +89,8 @@ export async function answerWebMessage(input: {
     forceHuman: context.forceHuman,
     handoffReason: context.handoffReason,
     usedLiveWebsite: context.usedLiveWebsite,
-    channel: 'website'
+    channel: 'website',
+    onTelemetry: (value) => { generation = value; }
   });
 
   await appendConversationTurn({
@@ -92,6 +112,15 @@ export async function answerWebMessage(input: {
   return {
     reply,
     sources,
-    handoffRecommended: context.forceHuman || reply.includes(env.COMPANY_HOTLINE)
+    handoffRecommended: context.forceHuman || reply.includes(env.COMPANY_HOTLINE),
+    telemetry: {
+      retrievalMode: context.retrieval.mode,
+      vectorMatches: context.retrieval.vectorMatches,
+      lexicalMatches: context.retrieval.lexicalMatches,
+      liveMatches: context.retrieval.liveMatches,
+      topSimilarity: context.retrieval.topSimilarity,
+      ...(context.retrieval.vectorError ? { vectorError: context.retrieval.vectorError } : {}),
+      generation
+    }
   };
 }

@@ -1,0 +1,36 @@
+name: Sync RAG Knowledge
+
+on:
+  schedule:
+    - cron: "30 19 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: sync-rag-knowledge
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Crawl website and incrementally index RAG
+        run: npm run sync:web
+        env:
+          NODE_ENV: production
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+          DYNAMIC_API_KEY: ${{ secrets.DYNAMIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          COMPANY_NAME: ${{ vars.COMPANY_NAME || 'Sơn Tiến Bảo' }}
+          COMPANY_WEBSITE: ${{ vars.COMPANY_WEBSITE || 'https://sontienbao.com/' }}
+          COMPANY_HOTLINE: ${{ vars.COMPANY_HOTLINE || '0913712195' }}
+          COMPANY_EMAIL: ${{ vars.COMPANY_EMAIL || 'ctytienbao@gmail.com' }}
+          RAG_EMBED_DELAY_MS: 1200

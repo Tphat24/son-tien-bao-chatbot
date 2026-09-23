@@ -94,6 +94,7 @@ dialog::backdrop{background:#0006}
     <a data-view="dashboard" class="active">Tổng quan</a>
     <a data-view="leads">Khách hàng</a>
     <a data-view="products">Sản phẩm</a>
+    <a data-view="knowledge">Kho tri thức</a>
     <a data-view="quotations">Báo giá</a>
     <a data-view="colors">Bảng màu</a>
     <a data-view="settings" data-perm="settings">Cấu hình</a>
@@ -166,12 +167,12 @@ function go(view){
   document.querySelectorAll('.side a').forEach(a=>a.classList.toggle('active',a.dataset.view===view));
   document.getElementById('side').classList.remove('open');
   const el=document.getElementById('view'); el.innerHTML='<p class="muted">Đang tải…</p>';
-  ({dashboard:viewDashboard,leads:viewLeads,products:viewProducts,quotations:viewQuotations,colors:viewColors,settings:viewSettings,staff:viewStaff}[view]||viewDashboard)(el).catch(e=>{el.innerHTML='<div class="panel"><p class="err">'+esc(e.message)+'</p></div>'});
+  ({dashboard:viewDashboard,leads:viewLeads,products:viewProducts,knowledge:viewKnowledge,quotations:viewQuotations,colors:viewColors,settings:viewSettings,staff:viewStaff}[view]||viewDashboard)(el).catch(e=>{el.innerHTML='<div class="panel"><p class="err">'+esc(e.message)+'</p></div>'});
 }
 
 /* ---------------- Dashboard ---------------- */
 async function viewDashboard(el){
-  const d = await api('/admin/leads/stats');
+  const [d,ops] = await Promise.all([api('/admin/leads/stats'),api('/admin/knowledge/operations')]);
   el.innerHTML = `
     <h1>Tổng quan</h1>
     <div class="cards">
@@ -179,6 +180,15 @@ async function viewDashboard(el){
       <div class="card"><div class="lbl">Chưa xử lý</div><div class="num">${d.unhandled??0}</div></div>
       <div class="card"><div class="lbl">Đã chốt đơn</div><div class="num">${d.won??0}</div></div>
       <div class="card"><div class="lbl">Tỷ lệ chuyển đổi</div><div class="num">${d.conversionRate??0}%</div></div>
+    </div>
+    <div class="panel"><h3>Chatbot & RAG · 7 ngày</h3>
+      <div class="cards">
+        <div class="card"><div class="lbl">Câu hỏi</div><div class="num">${ops.chat7d.requests??0}</div></div>
+        <div class="card"><div class="lbl">Fallback</div><div class="num">${ops.chat7d.statuses?.fallback??0}</div></div>
+        <div class="card"><div class="lbl">P95 phản hồi</div><div class="num">${ops.chat7d.p95DurationMs==null?'–':Math.round(ops.chat7d.p95DurationMs/100)/10+'s'}</div></div>
+        <div class="card"><div class="lbl">RAG đã index</div><div class="num">${ops.rag.coveragePercent??0}%</div></div>
+      </div>
+      <p class="muted">Model: ${esc(Object.entries(ops.chat7d.models||{}).map(([k,v])=>k+' ('+v+')').join(', ')||'chưa có dữ liệu')} · Truy xuất: ${esc(Object.entries(ops.chat7d.retrievalModes||{}).map(([k,v])=>k+' ('+v+')').join(', ')||'chưa có dữ liệu')}</p>
     </div>
     <div class="panel"><h3>Khách theo trạng thái</h3><div class="tblwrap"><table><thead><tr><th>Trạng thái</th><th>Số lượng</th></tr></thead><tbody>
       ${Object.entries(d.byStatus||{}).map(([k,v])=>`<tr><td>${esc(statusLabel(k))}</td><td>${v}</td></tr>`).join('')||'<tr><td colspan=2 class=muted>Chưa có dữ liệu</td></tr>'}
@@ -303,6 +313,37 @@ async function editProduct(id){
 }
 function val(id){return document.getElementById(id).value.trim()}
 function numOrNull(id){const v=document.getElementById(id).value.trim();return v===''?null:Number(v)}
+
+/* ---------------- Knowledge & RAG ---------------- */
+async function viewKnowledge(el){
+  const canWrite=['super_admin','manager'].includes(State.staff.role);
+  el.innerHTML=`<h1>Kho tri thức</h1>
+    <div class="panel" id="kg-stats"><p class="muted">Đang tải trạng thái RAG…</p></div>
+    <div class="panel">
+      <div class="row"><input id="kg-q" placeholder="Tìm theo tiêu đề" style="min-width:240px"><select id="kg-status"><option value="">Mọi trạng thái</option><option value="approved">Đã duyệt</option><option value="pending">Chờ duyệt</option><option value="rejected">Từ chối</option></select><button class="btn sm" id="kg-search">Lọc</button>${canWrite?'<button class="btn sm" id="kg-reindex">Index lại RAG</button><button class="btn sm right" id="kg-new">+ Thêm tài liệu</button>':''}</div>
+      <div class="tblwrap"><table><thead><tr><th>Tiêu đề</th><th>Loại</th><th>Trạng thái</th><th>Cập nhật</th><th></th></tr></thead><tbody id="kg-rows"></tbody></table></div>
+    </div>`;
+  document.getElementById('kg-search').onclick=loadKnowledge;
+  document.getElementById('kg-q').addEventListener('keydown',e=>{if(e.key==='Enter')loadKnowledge()});
+  if(canWrite){
+    document.getElementById('kg-new').onclick=()=>editKnowledge(null);
+    document.getElementById('kg-reindex').onclick=async()=>{const r=await api('/admin/knowledge/reindex',{method:'POST'});toast(r.alreadyRunning?'Đang có tác vụ index chạy':'Đã bắt đầu index RAG');await loadKnowledgeStats()};
+  }
+  await Promise.all([loadKnowledgeStats(),loadKnowledge()]);
+}
+async function loadKnowledgeStats(){
+  const o=await api('/admin/knowledge/operations');const r=o.rag;
+  document.getElementById('kg-stats').innerHTML=`<h3>Trạng thái RAG</h3><div class="cards"><div class="card"><div class="lbl">Tài liệu đã duyệt</div><div class="num">${r.approvedDocuments}</div></div><div class="card"><div class="lbl">Đã index</div><div class="num">${r.indexedDocuments}</div></div><div class="card"><div class="lbl">Chunks</div><div class="num">${r.chunks}</div></div><div class="card"><div class="lbl">Còn thiếu</div><div class="num">${r.missingDocuments}</div></div></div><p class="muted">Độ phủ ${r.coveragePercent}%${o.activeIndexJob?' · Đang index từ '+fmtDate(o.activeIndexJob.startedAt):''}</p>`;
+}
+async function loadKnowledge(){
+  const q=val('kg-q'),approval=val('kg-status');const p=new URLSearchParams();if(q)p.set('q',q);if(approval)p.set('approval',approval);
+  const r=await api('/admin/knowledge?'+p);const canWrite=['super_admin','manager'].includes(State.staff.role);
+  document.getElementById('kg-rows').innerHTML=(r.items||[]).map(k=>`<tr><td>${esc(k.title)}</td><td>${esc(k.page_type||'–')}</td><td><span class="badge ${k.approval_status==='approved'?'':'gray'}">${k.approval_status==='approved'?'Đã duyệt':k.approval_status==='pending'?'Chờ duyệt':'Từ chối'}</span></td><td class="muted">${fmtDate(k.updated_at)}</td><td><button class="btn sm ghost" onclick='editKnowledge("${k.id}")'>${canWrite?'Sửa':'Xem'}</button></td></tr>`).join('')||'<tr><td colspan=5 class=muted>Chưa có tài liệu</td></tr>';
+}
+async function editKnowledge(id){
+  const canWrite=['super_admin','manager'].includes(State.staff.role);let k={title:'',content:'',source_url:'',page_type:'manual',approval_status:'pending'};if(id)k=await api('/admin/knowledge/'+id);
+  dlg(id?'Tài liệu':'Thêm tài liệu',`<div class="fld"><label>Tiêu đề</label><input id="ke-title" value="${esc(k.title)}" ${canWrite?'':'disabled'}></div><div class="fld"><label>Nguồn URL</label><input id="ke-url" value="${esc(k.source_url||'')}" ${canWrite?'':'disabled'}></div><div class="grid2"><div class="fld"><label>Loại</label><input id="ke-type" value="${esc(k.page_type||'manual')}" ${canWrite?'':'disabled'}></div><div class="fld"><label>Trạng thái</label><select id="ke-status" ${canWrite?'':'disabled'}><option value="pending" ${k.approval_status==='pending'?'selected':''}>Chờ duyệt</option><option value="approved" ${k.approval_status==='approved'?'selected':''}>Đã duyệt</option><option value="rejected" ${k.approval_status==='rejected'?'selected':''}>Từ chối</option></select></div></div><div class="fld"><label>Nội dung</label><textarea id="ke-content" rows=12 ${canWrite?'':'disabled'}>${esc(k.content)}</textarea></div>`,canWrite?[{label:'Lưu',cls:'btn',fn:async(close)=>{const body={title:val('ke-title'),content:val('ke-content'),sourceUrl:val('ke-url'),pageType:val('ke-type'),approvalStatus:val('ke-status')};if(id)await api('/admin/knowledge/'+id,{method:'PATCH',body:JSON.stringify(body)});else await api('/admin/knowledge',{method:'POST',body:JSON.stringify(body)});toast('Đã lưu; hãy index lại RAG');close();await Promise.all([loadKnowledge(),loadKnowledgeStats()])}},...(id?[{label:'Xóa',cls:'btn danger',fn:async(close)=>{if(!confirm('Xóa tài liệu và toàn bộ chunks liên quan?'))return;await api('/admin/knowledge/'+id,{method:'DELETE'});toast('Đã xóa');close();await Promise.all([loadKnowledge(),loadKnowledgeStats()])}}]:[])]:[]);
+}
 
 /* ---------------- Quotations ---------------- */
 async function viewQuotations(el){

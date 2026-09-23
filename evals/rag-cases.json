@@ -1,0 +1,14 @@
+[
+  { "question": "Loại sơn nào giữ màu tốt khi nhà thường xuyên bị nắng?", "expectedTerms": ["ngoại thất", "bền màu"] },
+  { "question": "Tường ngoài trời bị thấm thì xử lý thế nào?", "expectedTerms": ["chống thấm"] },
+  { "question": "Sơn nội thất nào dễ lau chùi cho nhà có trẻ nhỏ?", "expectedTerms": ["nội thất", "lau chùi"] },
+  { "question": "Tường cũ bong tróc cần chuẩn bị bề mặt ra sao?", "expectedTerms": ["bong tróc", "bề mặt"] },
+  { "question": "Nhà mới có cần dùng sơn lót không?", "expectedTerms": ["sơn lót"] },
+  { "question": "Sơn ngoại thất chịu mưa nắng có những lựa chọn nào?", "expectedTerms": ["ngoại thất"] },
+  { "question": "Bột bả dùng để làm gì trước khi sơn?", "expectedTerms": ["bột bả", "bột trét", "putty"] },
+  { "question": "Tường bị nấm mốc nên xử lý trước khi sơn thế nào?", "expectedTerms": ["mốc"] },
+  { "question": "Sơn phòng ngủ nên ưu tiên tiêu chí gì?", "expectedTerms": ["nội thất"] },
+  { "question": "Có sơn nào phù hợp cho bề mặt kim loại không?", "expectedTerms": ["kim loại"] },
+  { "question": "Sơn chống thấm sân thượng cần thi công thế nào?", "expectedTerms": ["chống thấm"] },
+  { "question": "Định mức phủ của sơn được tính như thế nào?", "expectedTerms": ["định mức", "m²", "m2"] }
+]
