@@ -40,6 +40,8 @@
   const style = document.createElement('style');
 
   style.textContent = `
+    @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
+
     :host {
       all: initial;
     }
@@ -657,6 +659,15 @@
       cursor: not-allowed;
     }
 
+    .stb-button-spinner {
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(255, 255, 255, .45);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: stbSpin .7s linear infinite;
+    }
+
     .stb-success-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -784,6 +795,510 @@
         padding: 11px;
       }
     }
+
+    /* Premium UI refresh — scoped entirely inside the widget. */
+    :host {
+      --stb-green-950: #052e22;
+      --stb-green-900: #074532;
+      --stb-green-800: #075d42;
+      --stb-green-700: #087552;
+      --stb-green-100: #dff5e9;
+      --stb-green-50: #f1fbf5;
+      --stb-amber: #f5a524;
+      --stb-ink: #102a20;
+      --stb-muted: #66776f;
+      --stb-line: #dfe9e3;
+      --stb-surface: #ffffff;
+      --stb-canvas: #f4f8f5;
+    }
+
+    .stb-wrap {
+      ${position}: 22px;
+      bottom: 22px;
+      color: var(--stb-ink);
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    .stb-launch {
+      isolation: isolate;
+      width: 64px;
+      height: 64px;
+      border: 1px solid rgba(255, 255, 255, .28);
+      border-radius: 22px;
+      background: linear-gradient(145deg, #0a7b57 0%, #07523b 62%, #053d2d 100%);
+      box-shadow: 0 18px 46px rgba(5, 70, 49, .34), inset 0 1px 0 rgba(255, 255, 255, .22);
+      font-size: 27px;
+      transition: transform .22s ease, box-shadow .22s ease, border-radius .22s ease;
+    }
+
+    .stb-launch::before {
+      position: absolute;
+      inset: -6px;
+      z-index: -1;
+      border: 1px solid rgba(8, 117, 82, .22);
+      border-radius: 27px;
+      content: "";
+      animation: stbPulse 2.4s ease-out infinite;
+    }
+
+    .stb-launch:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 22px 54px rgba(5, 70, 49, .42), inset 0 1px 0 rgba(255, 255, 255, .26);
+    }
+
+    .stb-launch:focus-visible,
+    .stb-close:focus-visible,
+    .stb-chip:focus-visible,
+    .stb-send:focus-visible,
+    .stb-contact a:focus-visible,
+    .stb-primary:focus-visible,
+    .stb-secondary:focus-visible {
+      outline: 3px solid rgba(245, 165, 36, .55);
+      outline-offset: 3px;
+    }
+
+    .stb-launch .bi-chat-dots-fill,
+    .stb-launch .bi-x-lg {
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .18));
+    }
+
+    .stb-launch .bi-x-lg {
+      display: none;
+      font-size: 23px;
+    }
+
+    .stb-wrap.is-open .stb-launch .bi-chat-dots-fill {
+      display: none;
+    }
+
+    .stb-wrap.is-open .stb-launch .bi-x-lg {
+      display: inline-block;
+    }
+
+    .stb-wrap.is-open .stb-launch {
+      border-radius: 50%;
+    }
+
+    .stb-badge {
+      top: -2px;
+      right: -2px;
+      width: 17px;
+      height: 17px;
+      border: 3px solid #fff;
+      background: var(--stb-amber);
+      box-shadow: 0 3px 9px rgba(120, 73, 0, .25);
+    }
+
+    .stb-panel {
+      bottom: 78px;
+      width: min(410px, calc(100vw - 28px));
+      height: min(690px, calc(100dvh - 118px));
+      border: 1px solid rgba(7, 93, 66, .14);
+      border-radius: 26px;
+      background: var(--stb-surface);
+      box-shadow: 0 28px 80px rgba(9, 45, 33, .24), 0 8px 24px rgba(9, 45, 33, .1);
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      animation: stbOpen .28s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .stb-head {
+      position: relative;
+      min-height: 78px;
+      padding: 15px 16px;
+      gap: 12px;
+      overflow: hidden;
+      background: linear-gradient(125deg, #07583f 0%, #087552 58%, #0b8962 100%);
+    }
+
+    .stb-head::after {
+      position: absolute;
+      top: -55px;
+      right: -48px;
+      width: 150px;
+      height: 150px;
+      border: 24px solid rgba(255, 255, 255, .07);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+    }
+
+    .stb-avatar {
+      position: relative;
+      z-index: 1;
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255, 255, 255, .58);
+      border-radius: 15px;
+      background: linear-gradient(145deg, #fff, #eaf8f0);
+      box-shadow: 0 8px 22px rgba(0, 35, 24, .2);
+      color: var(--stb-green-800);
+      font-size: 21px;
+    }
+
+    .stb-avatar-status {
+      position: absolute;
+      right: -2px;
+      bottom: -2px;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #087552;
+      border-radius: 50%;
+      background: #5bea9b;
+    }
+
+    .stb-head-main {
+      position: relative;
+      z-index: 1;
+    }
+
+    .stb-title {
+      font-size: 15.5px;
+      font-weight: 800;
+      letter-spacing: -.01em;
+    }
+
+    .stb-status {
+      margin-top: 4px;
+      gap: 6px;
+      font-size: 11.5px;
+      opacity: .92;
+    }
+
+    .stb-dot {
+      width: 6px;
+      height: 6px;
+      background: #83f2b5;
+      box-shadow: 0 0 0 3px rgba(131, 242, 181, .13);
+    }
+
+    .stb-close {
+      position: relative;
+      z-index: 1;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .1);
+      font-size: 17px;
+      transition: background .18s ease, transform .18s ease;
+    }
+
+    .stb-close:hover {
+      background: rgba(255, 255, 255, .19);
+      transform: translateY(-1px);
+    }
+
+    .stb-contact {
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--stb-line);
+      background: rgba(255, 255, 255, .96);
+    }
+
+    .stb-contact a {
+      min-height: 38px;
+      gap: 7px;
+      padding: 0 9px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 750;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .stb-contact a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(15, 50, 37, .09);
+    }
+
+    .stb-contact-zalo { background: #086bf1; }
+    .stb-contact-call { border-color: #f2ddb2 !important; background: #fff8e9; color: #825100; }
+    .stb-contact-email { border-color: #dce5f2 !important; background: #f3f7fc; color: #28517d; }
+    .stb-contact .bi { font-size: 14px; }
+
+    .stb-body {
+      padding: 17px 14px 20px;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(8, 117, 82, .055), transparent 28%),
+        linear-gradient(180deg, #f7faf8 0%, #f3f7f4 100%);
+      scrollbar-color: #bfd2c7 transparent;
+      scrollbar-width: thin;
+    }
+
+    .stb-row {
+      gap: 8px;
+      margin-bottom: 13px;
+      animation: stbMessageIn .23s ease both;
+    }
+
+    .stb-message-avatar {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #d7e7de;
+      border-radius: 9px;
+      background: #fff;
+      box-shadow: 0 3px 10px rgba(9, 58, 40, .08);
+      color: var(--stb-green-700);
+      font-size: 13px;
+    }
+
+    .stb-bubble {
+      max-width: calc(89% - 30px);
+      padding: 11px 13px 9px;
+      border-radius: 17px;
+      font-size: 13.5px;
+      line-height: 1.58;
+    }
+
+    .stb-row.bot .stb-bubble {
+      border-color: #e0e9e4;
+      border-bottom-left-radius: 6px;
+      box-shadow: 0 5px 16px rgba(12, 67, 47, .06);
+    }
+
+    .stb-row.user .stb-bubble {
+      max-width: 86%;
+      border-bottom-right-radius: 6px;
+      background: linear-gradient(145deg, #087552, #075b42);
+      box-shadow: 0 6px 16px rgba(7, 93, 66, .18);
+    }
+
+    .stb-bubble-content { gap: 10px; }
+    .stb-time { margin-top: 6px; font-size: 9.5px; }
+
+    .stb-sources {
+      gap: 7px;
+      margin-top: 12px;
+      padding-top: 10px;
+    }
+
+    .stb-sources-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .stb-source {
+      min-height: 39px;
+      padding: 8px 10px;
+      border-color: #d9e7df;
+      border-radius: 11px;
+      background: var(--stb-green-50);
+      font-size: 11px;
+      font-weight: 650;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .stb-source::after { content: none; }
+    .stb-source:hover { transform: translateY(-1px); }
+    .stb-source .bi { flex: none; font-size: 13px; }
+
+    .stb-quick {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 4px 0 14px 36px;
+    }
+
+    .stb-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 9px 10px;
+      border-color: #cfe1d7;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 3px 11px rgba(13, 67, 48, .035);
+      color: #174735;
+      font-size: 11.5px;
+      transition: transform .17s ease, border-color .17s ease, box-shadow .17s ease, background .17s ease;
+    }
+
+    .stb-chip .bi {
+      width: 25px;
+      height: 25px;
+      flex: 0 0 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--stb-green-100);
+      color: var(--stb-green-700);
+      font-size: 12px;
+    }
+
+    .stb-chip:hover {
+      transform: translateY(-2px);
+      border-color: #67a68a;
+      background: #fff;
+      box-shadow: 0 7px 17px rgba(13, 67, 48, .08);
+    }
+
+    .stb-typing { padding: 4px 2px; }
+
+    .stb-lead {
+      margin-left: 36px;
+      padding: 15px;
+      border-color: #dbe8e1;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(13, 67, 48, .075);
+    }
+
+    .stb-lead-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14.5px;
+    }
+
+    .stb-lead-title .bi { color: var(--stb-green-700); }
+    .stb-lead-badge { padding: 6px 8px; background: var(--stb-green-100); }
+    .stb-form-group { gap: 6px; }
+    .stb-label { display: flex; align-items: center; gap: 6px; }
+    .stb-label .bi { color: #6f8278; font-size: 12px; }
+
+    .stb-field {
+      min-height: 42px;
+      padding: 10px 12px;
+      border-color: #d5e1da;
+      border-radius: 12px;
+      background: #f8faf9;
+      transition: border-color .17s ease, box-shadow .17s ease, background .17s ease;
+    }
+
+    .stb-field:focus {
+      border-color: #4a9b77;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(8, 117, 82, .09);
+    }
+
+    .stb-contact-hint { border: 1px solid #e3ebe6; border-radius: 11px; }
+    .stb-lead-actions { gap: 8px; }
+
+    .stb-secondary,
+    .stb-primary {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 11px;
+      transition: transform .16s ease, box-shadow .16s ease;
+    }
+
+    .stb-primary {
+      background: linear-gradient(145deg, #087552, #07563e);
+      box-shadow: 0 6px 14px rgba(7, 93, 66, .16);
+    }
+
+    .stb-secondary:hover,
+    .stb-primary:hover { transform: translateY(-1px); }
+
+    .stb-success-actions { margin-left: 36px; gap: 8px; }
+    .stb-success-actions a { gap: 7px; min-height: 40px; border-radius: 12px; }
+
+    .stb-foot {
+      padding: 12px 13px 10px;
+      border-top-color: var(--stb-line);
+      box-shadow: 0 -6px 24px rgba(17, 55, 41, .035);
+    }
+
+    .stb-input-row {
+      gap: 8px;
+      min-height: 49px;
+      padding: 6px 6px 6px 13px;
+      border-color: #d5e2da;
+      border-radius: 16px;
+      background: #f5f8f6;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .stb-input-row:focus-within {
+      border-color: #59a382;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(8, 117, 82, .075);
+    }
+
+    .stb-textarea { padding: 8px 0; font-size: 13.5px; }
+
+    .stb-send {
+      width: 39px;
+      height: 39px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #09815b, #07563e);
+      box-shadow: 0 6px 14px rgba(7, 93, 66, .2);
+      font-size: 16px;
+      transition: transform .17s ease, box-shadow .17s ease;
+    }
+
+    .stb-send:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 9px 18px rgba(7, 93, 66, .27);
+    }
+
+    .stb-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 7px;
+      color: #7b8b83;
+      font-size: 9.5px;
+    }
+
+    @keyframes stbPulse {
+      0%, 55% { opacity: 0; transform: scale(.94); }
+      70% { opacity: .7; }
+      100% { opacity: 0; transform: scale(1.16); }
+    }
+
+    @keyframes stbMessageIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @keyframes stbSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 520px) {
+      .stb-wrap { ${position}: 12px; bottom: 12px; }
+      .stb-panel {
+        left: 8px;
+        right: 8px;
+        bottom: 84px;
+        height: min(720px, calc(100dvh - 100px));
+        border-radius: 23px;
+      }
+      .stb-launch { width: 60px; height: 60px; border-radius: 20px; }
+      .stb-head { min-height: 72px; padding: 12px 14px; }
+      .stb-contact { padding: 8px 10px; }
+      .stb-contact a { min-height: 36px; padding: 0 6px; font-size: 10.5px; }
+      .stb-body { padding: 14px 11px 17px; }
+      .stb-quick { margin-left: 34px; gap: 7px; }
+      .stb-chip { padding: 8px; font-size: 10.8px; }
+      .stb-lead { margin-left: 0; }
+      .stb-success-actions { margin-left: 34px; }
+    }
+
+    @media (max-width: 370px) {
+      .stb-quick { grid-template-columns: 1fr; }
+      .stb-contact { gap: 5px; }
+      .stb-contact a { font-size: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
   `;
 
   root.appendChild(style);
@@ -795,14 +1310,20 @@
 
   wrap.innerHTML = `
     <section
+      id="stb-chat-panel"
       class="stb-panel"
-      aria-label="Chatbot tư vấn Sơn Tiến Bảo">
+      role="dialog"
+      aria-labelledby="stb-chat-title"
+      aria-hidden="true">
 
       <header class="stb-head">
-        <div class="stb-avatar">STB</div>
+        <div class="stb-avatar" aria-hidden="true">
+          <i class="bi bi-stars"></i>
+          <span class="stb-avatar-status"></span>
+        </div>
 
         <div class="stb-head-main">
-          <div class="stb-title">
+          <div class="stb-title" id="stb-chat-title">
             Trợ lý Sơn Tiến Bảo
           </div>
 
@@ -816,7 +1337,7 @@
           class="stb-close"
           type="button"
           aria-label="Đóng chatbot">
-          ×
+          <i class="bi bi-dash-lg" aria-hidden="true"></i>
         </button>
       </header>
 
@@ -827,21 +1348,24 @@
           href="https://zalo.me/0913712195"
           target="_blank"
           rel="noopener noreferrer">
-          💬 Zalo
+          <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
+          <span>Zalo</span>
         </a>
 
         <a
           class="stb-contact-call"
           data-director-call
           href="tel:0913712195">
-          📞 Gọi
+          <i class="bi bi-telephone-fill" aria-hidden="true"></i>
+          <span>Gọi ngay</span>
         </a>
 
         <a
           class="stb-contact-email"
           data-company-email
           href="mailto:ctytienbao@gmail.com">
-          ✉️ Email
+          <i class="bi bi-envelope-fill" aria-hidden="true"></i>
+          <span>Email</span>
         </a>
       </div>
 
@@ -856,7 +1380,8 @@
             class="stb-textarea"
             rows="1"
             maxlength="1200"
-            placeholder="Nhập nhu cầu cần tư vấn...">
+            aria-label="Nội dung cần tư vấn"
+            placeholder="Nhập câu hỏi của Anh/Chị...">
           </textarea>
 
           <button
@@ -864,25 +1389,13 @@
             type="button"
             aria-label="Gửi tin nhắn">
 
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true">
-
-              <path
-                d="M21 3 10 14M21 3l-7 18-4-7-7-4 18-7Z"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-              </path>
-            </svg>
+            <i class="bi bi-send-fill" aria-hidden="true"></i>
           </button>
         </div>
 
         <div class="stb-note">
-          AI hỗ trợ sơ bộ • Giá bán và kỹ thuật
-          được nhân viên xác nhận
+          <i class="bi bi-shield-check" aria-hidden="true"></i>
+          AI tư vấn 24/7 • Nhân viên xác nhận báo giá
         </div>
       </footer>
     </section>
@@ -890,30 +1403,14 @@
     <button
       class="stb-launch"
       type="button"
-      aria-label="Mở chatbot tư vấn">
+      aria-label="Mở chatbot tư vấn"
+      aria-controls="stb-chat-panel"
+      aria-expanded="false">
 
       <span class="stb-badge"></span>
 
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden="true">
-
-        <path
-          d="M20 11.5a8 8 0 0 1-8.5 8A8.7 8.7 0 0 1 8 18.8L3 20l1.3-4.1A8 8 0 1 1 20 11.5Z"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round">
-        </path>
-
-        <path
-          d="M8 11h.01M12 11h.01M16 11h.01"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round">
-        </path>
-      </svg>
+      <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
+      <i class="bi bi-x-lg" aria-hidden="true"></i>
     </button>
   `;
 
@@ -1032,20 +1529,20 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
     directorZaloLink.href =
       zaloValue();
 
-    directorZaloLink.textContent =
-      '💬 Zalo';
+    directorZaloLink.innerHTML =
+      '<i class="bi bi-chat-dots-fill" aria-hidden="true"></i><span>Zalo</span>';
 
     directorCallLink.href =
       `tel:${phone}`;
 
-    directorCallLink.textContent =
-      '📞 Gọi';
+    directorCallLink.innerHTML =
+      '<i class="bi bi-telephone-fill" aria-hidden="true"></i><span>Gọi ngay</span>';
 
     companyEmailLink.href =
       `mailto:${email}`;
 
-    companyEmailLink.textContent =
-      '✉️ Email';
+    companyEmailLink.innerHTML =
+      '<i class="bi bi-envelope-fill" aria-hidden="true"></i><span>Email</span>';
 
     companyEmailLink.title = email;
   }
@@ -1170,6 +1667,24 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
     row.className =
       `stb-row ${role}`;
 
+    if (role === 'bot') {
+      const avatar =
+        document.createElement('span');
+
+      avatar.className =
+        'stb-message-avatar';
+
+      avatar.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+      avatar.innerHTML =
+        '<i class="bi bi-stars"></i>';
+
+      row.appendChild(avatar);
+    }
+
     const bubble =
       document.createElement('div');
 
@@ -1186,7 +1701,28 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
 
     bubble.appendChild(content);
 
-    const validSources = [];
+    const validSources =
+      (Array.isArray(sources) ? sources : [])
+        .filter((source) => {
+          if (!source?.url) {
+            return false;
+          }
+
+          try {
+            const url = new URL(
+              source.url,
+              window.location.href
+            );
+
+            return [
+              'http:',
+              'https:'
+            ].includes(url.protocol);
+          } catch {
+            return false;
+          }
+        })
+        .slice(0, MAX_VISIBLE_SOURCES);
 
     if (validSources.length) {
       const sourceBox =
@@ -1201,8 +1737,8 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
       sourceTitle.className =
         'stb-sources-title';
 
-      sourceTitle.textContent =
-        'Sản phẩm / tài liệu liên quan';
+      sourceTitle.innerHTML =
+        '<i class="bi bi-journal-check" aria-hidden="true"></i><span>Nguồn tham khảo</span>';
 
       sourceBox.appendChild(
         sourceTitle
@@ -1222,9 +1758,25 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
           link.rel =
             'noopener noreferrer';
 
-          link.textContent =
+          const label =
+            document.createElement('span');
+
+          label.textContent =
             source.title ||
             'Xem thông tin trên sontienbao.com';
+
+          const icon =
+            document.createElement('i');
+
+          icon.className =
+            'bi bi-arrow-up-right';
+
+          icon.setAttribute(
+            'aria-hidden',
+            'true'
+          );
+
+          link.append(label, icon);
 
           sourceBox.appendChild(link);
         }
@@ -1282,7 +1834,45 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
 
         button.type = 'button';
         button.className = 'stb-chip';
-        button.textContent = label;
+
+        const normalized =
+          String(label).toLowerCase();
+
+        let iconName =
+          'bi-chat-square-text';
+
+        if (normalized.includes('sản phẩm') || normalized.includes('bảng giá')) {
+          iconName = 'bi-tags';
+        } else if (normalized.includes('nội thất')) {
+          iconName = 'bi-house-door';
+        } else if (normalized.includes('ngoại thất')) {
+          iconName = 'bi-buildings';
+        } else if (normalized.includes('chống thấm')) {
+          iconName = 'bi-droplet-half';
+        } else if (normalized.includes('trực tiếp') || normalized.includes('zalo')) {
+          iconName = 'bi-headset';
+        } else if (normalized.includes('gọi')) {
+          iconName = 'bi-telephone';
+        } else if (normalized.includes('hỏi thêm')) {
+          iconName = 'bi-plus-circle';
+        }
+
+        const icon =
+          document.createElement('i');
+
+        icon.className =
+          `bi ${iconName}`;
+
+        icon.setAttribute(
+          'aria-hidden',
+          'true'
+        );
+
+        const labelText =
+          document.createElement('span');
+
+        labelText.textContent = label;
+        button.append(icon, labelText);
 
         button.addEventListener(
           'click',
@@ -1307,6 +1897,9 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
     row.dataset.typing = '1';
 
     row.innerHTML = `
+      <span class="stb-message-avatar" aria-hidden="true">
+        <i class="bi bi-stars"></i>
+      </span>
       <div class="stb-bubble">
         <span class="stb-typing">
           <i></i><i></i><i></i>
@@ -1475,8 +2068,8 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
     zalo.rel =
       'noopener noreferrer';
 
-    zalo.textContent =
-      '💬 Chat Zalo';
+    zalo.innerHTML =
+      '<i class="bi bi-chat-dots-fill" aria-hidden="true"></i><span>Chat Zalo</span>';
 
     const call =
       document.createElement('a');
@@ -1485,7 +2078,8 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
       'stb-success-call';
 
     call.href = `tel:${phone}`;
-    call.textContent = '📞 Gọi ngay';
+    call.innerHTML =
+      '<i class="bi bi-telephone-fill" aria-hidden="true"></i><span>Gọi ngay</span>';
 
     actions.append(zalo, call);
     body.appendChild(actions);
@@ -1510,6 +2104,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
       <div class="stb-lead-head">
         <div>
           <div class="stb-lead-title">
+            <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
             Nhận tư vấn và báo giá
           </div>
 
@@ -1528,6 +2123,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
       <div class="stb-form-grid">
         <label class="stb-form-group">
           <span class="stb-label">
+            <i class="bi bi-person" aria-hidden="true"></i>
             Họ và tên
             <span class="stb-required">
               *
@@ -1545,6 +2141,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
 
         <label class="stb-form-group">
           <span class="stb-label">
+            <i class="bi bi-telephone" aria-hidden="true"></i>
             Số điện thoại
             <span class="stb-required">
               *
@@ -1563,6 +2160,7 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
 
         <label class="stb-form-group">
           <span class="stb-label">
+            <i class="bi bi-card-text" aria-hidden="true"></i>
             Nhu cầu cần tư vấn
             <span class="stb-required">
               *
@@ -1607,12 +2205,14 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
         <button
           class="stb-secondary"
           type="button">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
           Để sau
         </button>
 
         <button
           class="stb-primary"
           type="submit">
+          <i class="bi bi-send-check" aria-hidden="true"></i>
           Gửi yêu cầu
         </button>
       </div>
@@ -1703,8 +2303,8 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
         }
 
         submit.disabled = true;
-        submit.textContent =
-          'Đang gửi...';
+        submit.innerHTML =
+          '<span class="stb-button-spinner" aria-hidden="true"></span><span>Đang gửi...</span>';
 
         try {
           await ensureSession();
@@ -1755,8 +2355,8 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
           );
         } catch (error) {
           submit.disabled = false;
-          submit.textContent =
-            'Gửi yêu cầu';
+          submit.innerHTML =
+            '<i class="bi bi-send-check" aria-hidden="true"></i><span>Gửi yêu cầu</span>';
 
           showFormError(
             error instanceof Error
@@ -1864,15 +2464,36 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
     () => {
       panel.classList.toggle('open');
 
+      const isOpen =
+        panel.classList.contains('open');
+
+      wrap.classList.toggle(
+        'is-open',
+        isOpen
+      );
+
+      launch.setAttribute(
+        'aria-expanded',
+        String(isOpen)
+      );
+
+      launch.setAttribute(
+        'aria-label',
+        isOpen
+          ? 'Đóng chatbot tư vấn'
+          : 'Mở chatbot tư vấn'
+      );
+
+      panel.setAttribute(
+        'aria-hidden',
+        String(!isOpen)
+      );
+
       launch
         .querySelector('.stb-badge')
         ?.remove();
 
-      if (
-        panel.classList.contains(
-          'open'
-        )
-      ) {
+      if (isOpen) {
         scrollBottom();
 
         setTimeout(() => {
@@ -1886,6 +2507,32 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
     'click',
     () => {
       panel.classList.remove('open');
+      wrap.classList.remove('is-open');
+      panel.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+      launch.setAttribute(
+        'aria-expanded',
+        'false'
+      );
+      launch.setAttribute(
+        'aria-label',
+        'Mở chatbot tư vấn'
+      );
+      launch.focus();
+    }
+  );
+
+  root.addEventListener(
+    'keydown',
+    (event) => {
+      if (
+        event.key === 'Escape' &&
+        panel.classList.contains('open')
+      ) {
+        close.click();
+      }
     }
   );
 
