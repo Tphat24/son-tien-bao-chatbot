@@ -1,4 +1,8 @@
-# Sơn Tiến Bảo Web Smart Advisor v6.2
+# Sơn Tiến Bảo Web Smart Advisor v6.3
+
+## Sửa tự mở Shopee và icon điện thoại
+
+v6.3 bổ sung guard chặn các đích quảng cáo Shopee/Lazada, link mở ứng dụng và một số redirect khi khách bấm website. Icon nhìn thấy 36px, vùng chạm 44px. Xem [hướng dẫn iTop và kiểm tra script nguồn](docs/UPGRADE_SHOPPING_GUARD_V63.md). Guard có sẵn trong widget; để chạy trước các bộ đếm bên ngoài, nạp thêm `site-guard.js` trong đầu trang iTop.
 
 ## Nâng cấp giao diện và RAG (29/10/2026)
 
