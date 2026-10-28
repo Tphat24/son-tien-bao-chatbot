@@ -1,6 +1,6 @@
 {
   "name": "son-tien-bao-zalo-bot-webhook",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,7 +14,9 @@
     "rag:index": "tsx scripts/index-rag.ts",
     "rag:eval": "tsx scripts/evaluate-rag.ts",
     "seed:admin": "tsx scripts/seed-admin.ts",
-    "test": "tsx --import ./tests/_setup-env.ts --test tests/*.test.ts"
+    "test": "tsx --import ./tests/_setup-env.ts --test tests/*.test.ts",
+    "test:widget": "node tests/widget.browser.mjs",
+    "test:rag-db": "node tests/retrieval-db.mjs"
   },
   "engines": {
     "node": ">=24 <25"

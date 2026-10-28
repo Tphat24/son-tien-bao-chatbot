@@ -1,4 +1,8 @@
-# Sơn Tiến Bảo Web Smart Advisor v4
+# Sơn Tiến Bảo Web Smart Advisor v6.2
+
+## Nâng cấp giao diện và RAG (29/10/2026)
+
+Xem [hướng dẫn nâng cấp](docs/UPGRADE_CHAT_RAG_V2.md) để áp dụng migration 04, lập lại chỉ mục và cấu hình popup trên website. Bản này hỗ trợ Gemini Embedding 2, tìm kiếm tiếng Việt có/không dấu, hợp nhất thứ hạng RRF, icon điện thoại 48px và khung chat dễ đọc hơn.
 
 Chatbot AI gắn trực tiếp vào `sontienbao.com`. Hệ thống dùng Railway làm backend, Supabase lưu dữ liệu/hội thoại/lead và Gemini để trả lời dựa trên dữ liệu sản phẩm, tài liệu đã duyệt và nội dung website.
 
@@ -7,9 +11,9 @@ Chatbot AI gắn trực tiếp vào `sontienbao.com`. Hệ thống dùng Railway
 - Widget chat nổi, responsive, không phụ thuộc framework của website.
 - Tư vấn chọn sơn theo mục đích: nội thất, ngoại thất, chống thấm, sân thể thao, công nghiệp.
 - Tìm dữ liệu từ bảng `products`, `knowledge_documents` và website Sơn Tiến Bảo.
-- RAG lai (vector + từ khóa) bằng Gemini Embeddings và Supabase `pgvector`, có lọc tenant và fallback an toàn.
+- RAG lai (vector + full-text tiếng Việt + RRF) bằng Gemini Embedding 2/001 và Supabase `pgvector`, có lọc tenant/model, giới hạn context và lexical fallback.
 - Ghi nhớ tối đa 8 lượt gần nhất theo phiên trình duyệt.
-- Trả kèm liên kết nguồn sản phẩm/tài liệu.
+- Dùng nguồn sản phẩm/tài liệu để kiểm tra nội bộ; không hiển thị mục nguồn tham khảo trong widget.
 - Thu tên, số điện thoại và nhu cầu; lưu vào `leads` với nguồn `website_chatbot`.
 - Gửi email lead nếu SMTP đã cấu hình.
 - Chuyển sang nhân viên khi thiếu dữ liệu, báo giá chính thức, đơn hàng hoặc vấn đề cần kiểm tra thực tế.
@@ -36,7 +40,7 @@ npm run dev
 
 ## Khởi tạo RAG doanh nghiệp
 
-1. Chạy `supabase/02_ENTERPRISE_RAG.sql` trong Supabase SQL Editor.
+1. Chạy lần lượt các migration 00–04 trong `supabase/` bằng Supabase SQL Editor.
 2. Bảo đảm các tài liệu cần dùng có `approval_status = 'approved'`.
 3. Tạo embedding và lập chỉ mục:
 
