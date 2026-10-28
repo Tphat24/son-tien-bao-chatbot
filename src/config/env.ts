@@ -41,6 +41,8 @@ const schema = z.object({
   AI_RETRY_BASE_DELAY_MS: z.coerce.number().int().min(0).max(5000).default(400),
   AI_MAX_PRODUCTS: z.coerce.number().int().min(1).max(5).default(5),
   AI_MAX_KNOWLEDGE_DOCS: z.coerce.number().int().min(1).max(8).default(5),
+  AI_WEBSITE_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(512).max(8192).default(2048),
+  AI_WEBSITE_MAX_REPLY_CHARS: z.coerce.number().int().min(1200).max(24000).default(12000),
   RAG_ENABLED: boolString('true'),
   RAG_TENANT_ID: z.string().trim().min(1).max(100).default('default'),
   RAG_EMBEDDING_MODEL: z.string().trim().min(1).default('gemini-embedding-2'),

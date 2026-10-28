@@ -6,6 +6,8 @@
 - Khung chat dùng một bộ CSS, font tin nhắn 15 px, ô nhập 16 px, bong bóng bot rộng hơn. Giữ đoạn văn, hiển thị danh sách theo từng dòng và không làm hỏng số đo.
 - Khung chat điều chỉnh theo visual viewport khi bàn phím điện thoại mở. Nút đóng và nút gửi có vùng bấm 44 px. Mở chat trên điện thoại không tự bật bàn phím.
 - Bỏ mục “Nguồn tham khảo” trên giao diện theo yêu cầu. Bot vẫn dùng tài liệu để tìm và tổng hợp câu trả lời; các nguồn được backend lưu trong log phục vụ kiểm tra nội bộ.
+- Câu trả lời website không còn bị ép vào 650 ký tự hoặc cắt ở 760 ký tự: mặc định có ngân sách 2048 output tokens và giới hạn bảo vệ 12000 ký tự. Bot trả lời lần lượt các ý khách hỏi, trình bày theo đoạn/bước, phân biệt thông tin đã xác minh với giả định và phần còn thiếu. Câu hỏi đơn giản vẫn được trả lời gọn. Giới hạn tin nhắn Zalo được giữ riêng.
+- Lịch sử hội thoại giữ các đoạn và câu trả lời dài thay vì cắt ở 900 ký tự. Nếu phản hồi website chạm giới hạn token/ký tự, bot nói rõ để khách có thể yêu cầu trình bày tiếp.
 - Thêm lựa chọn “Để lại yêu cầu” để mở form liên hệ đang có sẵn. “Tư vấn trực tiếp” vẫn mở Zalo.
 - Dùng Popover API đưa icon và khung chat lên top layer trên trình duyệt hỗ trợ; có fallback fixed/z-index. Không can thiệp cửa sổ hay ứng dụng khác.
 - RAG hỗ trợ Gemini Embedding 2 với tiền tố truy vấn/tài liệu đúng định dạng và mỗi chunk là một Content riêng; tiếp tục hỗ trợ `gemini-embedding-001`.
@@ -72,6 +74,8 @@ Widget không tự chọn mọi `.popup`, `.modal`, form đăng nhập hoặc b�
 ```dotenv
 RAG_QUERY_TIMEOUT_MS=5000
 RAG_CONTEXT_MAX_CHARS=12000
+AI_WEBSITE_MAX_OUTPUT_TOKENS=2048
+AI_WEBSITE_MAX_REPLY_CHARS=12000
 ```
 
 Giữ nguyên key Gemini/Supabase hiện có ở backend. Không cần OpenAI API key.

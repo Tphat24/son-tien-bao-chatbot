@@ -133,6 +133,13 @@ try {
   await page.locator('.stb-send').click();
   await page.locator('.stb-bubble-content ul').waitFor({ state: 'attached' });
   await page.screenshot({ path: new URL('../artifacts/preview-mobile.png', import.meta.url).pathname.replace(/^\/(.:)/, '$1'), fullPage: true });
+  response.reply = Array.from({ length: 12 }, (_, i) => `${i + 1}. Đọc đúng hướng dẫn thi công, định mức và điều kiện bề mặt trong tài liệu sản phẩm.`).join('\n\n') + '\n\nLưu ý cuối: cần xác nhận với nhân viên khi thiếu dữ liệu.';
+  await page.locator('.stb-textarea').fill('Giải thích đầy đủ từng bước');
+  await page.locator('.stb-send').click();
+  await page.locator('.stb-row.bot').last().getByText('Lưu ý cuối: cần xác nhận với nhân viên khi thiếu dữ liệu.').waitFor({ state: 'attached' });
+  assert.equal(await page.locator('.stb-row.bot').last().locator('li').count(), 12);
+  assert.equal(await page.locator('.stb-body').evaluate((el) => el.scrollWidth <= el.clientWidth), true);
+  console.log('PASS long detailed mobile answer preserves all steps and its final caveat');
 } finally {
   await browser?.close();
   await new Promise((resolve) => server.close(resolve));
