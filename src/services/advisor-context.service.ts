@@ -2,7 +2,8 @@ import { env } from '../config/env.js';
 import { normalizeText } from '../utils/text.js';
 import { detectQueryIntent, searchKnowledge, searchProducts, type KnowledgeRow, type ProductRow } from './catalog.service.js';
 import { searchWebsiteLive } from './website-retrieval.service.js';
-import { searchKnowledgeVector } from './rag.service.js';
+import { searchKnowledgeVector, searchKnowledgeLexical } from './rag.service.js';
+import { fuseKnowledge } from './retrieval-ranking.js';
 
 export type AdvisorContext = {
   products: ProductRow[];
@@ -20,18 +21,6 @@ export type AdvisorContext = {
   };
 };
 
-function uniqueKnowledge(documents: KnowledgeRow[]): KnowledgeRow[] {
-  const seen = new Set<string>();
-  const result: KnowledgeRow[] = [];
-  for (const document of documents) {
-    const key = document.source_url || `${document.title}:${document.content.slice(0, 80)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push(document);
-  }
-  return result.slice(0, env.AI_MAX_KNOWLEDGE_DOCS);
-}
-
 function policyHandoff(query: string): { forceHuman: boolean; reason?: string } {
   const value = normalizeText(query);
   if (/khieu nai|phan nan|don hang cua toi|ma don|tra cuu don/.test(value)) {
@@ -47,7 +36,9 @@ export async function retrieveAdvisorContext(query: string): Promise<AdvisorCont
   let vectorError: string | undefined;
   const [products, indexedKnowledge, vectorKnowledge] = await Promise.all([
     searchProducts(query),
-    searchKnowledge(query, env.AI_MAX_KNOWLEDGE_DOCS),
+    searchKnowledgeLexical(query)
+      .catch(() => [] as KnowledgeRow[])
+      .then((matches) => matches.length ? matches : searchKnowledge(query, env.RAG_TOP_K)),
     searchKnowledgeVector(query, { limit: env.RAG_TOP_K }).catch((error) => {
       vectorError = error instanceof Error ? error.message : String(error);
       console.warn('RAG vector retrieval unavailable; using lexical fallback:', vectorError);
@@ -60,7 +51,7 @@ export async function retrieveAdvisorContext(query: string): Promise<AdvisorCont
     liveKnowledge = await searchWebsiteLive(query);
   }
 
-  const knowledge = uniqueKnowledge([...vectorKnowledge, ...indexedKnowledge, ...liveKnowledge]);
+  const knowledge = fuseKnowledge([vectorKnowledge, indexedKnowledge, liveKnowledge], env.AI_MAX_KNOWLEDGE_DOCS, env.RAG_CONTEXT_MAX_CHARS);
   const policy = policyHandoff(query);
   const intent = detectQueryIntent(query);
   const hasEvidence = products.length > 0 || knowledge.length > 0;

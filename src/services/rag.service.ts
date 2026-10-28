@@ -2,7 +2,8 @@ import crypto from 'node:crypto';
 import { GoogleGenAI } from '@google/genai';
 import { env } from '../config/env.js';
 import { db } from '../db/supabase.js';
-import type { KnowledgeRow } from './catalog.service.js';
+import { queryTerms, type KnowledgeRow } from './catalog.service.js';
+import { embeddingInput, EMBEDDING_INPUT_VERSION, normalizeEmbedding } from './embedding-input.js';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 let embeddingUnavailableUntil = 0;
@@ -60,7 +61,7 @@ const queryEmbeddingCache = new Map<string, CachedEmbedding>();
 let databaseEmbeddingCacheUnavailableUntil = 0;
 
 function embeddingCacheKey(content: string): string {
-  return crypto.createHash('sha256').update(`${env.RAG_EMBEDDING_MODEL}\n${content}`).digest('hex');
+  return crypto.createHash('sha256').update(`${env.RAG_EMBEDDING_MODEL}\n${EMBEDDING_INPUT_VERSION}\n768\n${content}`).digest('hex');
 }
 
 function rememberQueryEmbedding(key: string, values: number[], expiresAt: number): void {
@@ -91,7 +92,7 @@ async function getCachedQueryEmbedding(content: string): Promise<number[] | null
     return null;
   }
   const values = Array.isArray(data?.embedding) ? data.embedding.map(Number) : [];
-  if (values.length !== 768) return null;
+  if (values.length !== 768 || !values.every(Number.isFinite) || Math.hypot(...values) === 0) return null;
   const expiresAt = new Date(data!.expires_at as string).getTime();
   rememberQueryEmbedding(key, values, expiresAt);
   return values;
@@ -123,6 +124,7 @@ export function chunkText(
   overlapChars = env.RAG_CHUNK_OVERLAP
 ): string[] {
   const text = compactWhitespace(value);
+  if (!Number.isInteger(maxChars) || maxChars < 2) throw new Error('Chunk size must be an integer greater than one');
   const safeOverlap = Math.min(Math.max(overlapChars, 0), maxChars - 1);
   if (!text) return [];
   if (text.length <= maxChars) return [text];
@@ -157,16 +159,16 @@ async function embedContents(
     throw new Error('Embedding quota circuit breaker is open; lexical retrieval is active');
   }
   let response: Awaited<ReturnType<typeof ai.models.embedContent>> | undefined;
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  const maxAttempts = taskType === 'RETRIEVAL_QUERY' ? 1 : 5;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
+      const request = embeddingInput(env.RAG_EMBEDDING_MODEL, contents, taskType, title);
       response = await ai.models.embedContent({
         model: env.RAG_EMBEDDING_MODEL,
-        contents,
+        contents: request.contents,
         config: {
-          abortSignal: AbortSignal.timeout(env.RAG_EMBED_TIMEOUT_MS),
-          outputDimensionality: 768,
-          taskType,
-          ...(taskType === 'RETRIEVAL_DOCUMENT' && title ? { title } : {})
+          abortSignal: AbortSignal.timeout(taskType === 'RETRIEVAL_QUERY' ? env.RAG_QUERY_TIMEOUT_MS : env.RAG_EMBED_TIMEOUT_MS),
+          ...request.config
         }
       });
       break;
@@ -175,7 +177,7 @@ async function embedContents(
         embeddingUnavailableUntil = Date.now() + 5 * 60_000;
         throw error;
       }
-      if (!retryableEmbeddingError(error) || attempt === 4) throw error;
+      if (!retryableEmbeddingError(error) || attempt === maxAttempts - 1) throw error;
       await wait(1_500 * 2 ** attempt + Math.floor(Math.random() * 500));
     }
   }
@@ -185,8 +187,7 @@ async function embedContents(
     throw new Error(`Embedding count mismatch: expected ${contents.length}, received ${embeddings.length}`);
   }
   return embeddings.map((embedding) => {
-    if (!embedding.values?.length) throw new Error('Gemini returned an empty embedding');
-    return embedding.values;
+    return normalizeEmbedding(embedding.values);
   });
 }
 
@@ -204,11 +205,13 @@ export async function searchKnowledgeVector(
   }
   if (!embedding) return [];
 
-  const { data, error } = await db.rpc('match_knowledge_chunks', {
+  const { data, error } = await db.rpc('match_knowledge_chunks_v2', {
     query_embedding: embedding,
     match_threshold: options.threshold ?? env.RAG_MATCH_THRESHOLD,
     match_count: options.limit ?? env.RAG_TOP_K,
-    filter_tenant_id: options.tenantId ?? env.RAG_TENANT_ID
+    filter_tenant_id: options.tenantId ?? env.RAG_TENANT_ID,
+    filter_embedding_model: env.RAG_EMBEDDING_MODEL,
+    filter_input_version: EMBEDDING_INPUT_VERSION
   });
   if (error) throw error;
 
@@ -220,6 +223,24 @@ export async function searchKnowledgeVector(
     approval_status: 'approved',
     retrieval_score: Number(match.similarity),
     chunk_id: match.chunk_id
+  }));
+}
+
+/** Indexed full-text search for Vietnamese (accent-insensitive), independent of Gemini availability. */
+export async function searchKnowledgeLexical(query: string): Promise<KnowledgeRow[]> {
+  const terms = queryTerms(query);
+  if (!terms.length) return [];
+  const { data, error } = await db.rpc('search_knowledge_chunks_lexical', {
+    query_text: terms.join(' '),
+    match_count: env.RAG_TOP_K,
+    filter_tenant_id: env.RAG_TENANT_ID,
+    filter_embedding_model: env.RAG_EMBEDDING_MODEL,
+    filter_input_version: EMBEDDING_INPUT_VERSION
+  });
+  if (error) throw error;
+  return ((data ?? []) as VectorMatch[]).map((match) => ({
+    id: match.document_id, title: match.title, content: match.content,
+    source_url: match.source_url, approval_status: 'approved', chunk_id: match.chunk_id
   }));
 }
 
@@ -257,11 +278,16 @@ export async function indexApprovedKnowledge(tenantId = env.RAG_TENANT_ID): Prom
   for (const document of (data ?? []) as KnowledgeDocument[]) {
     const contentHash = document.content_hash || crypto.createHash('sha256').update(document.content).digest('hex');
     const chunks = chunkText(document.content);
+    const fingerprint = crypto.createHash('sha256').update(JSON.stringify({
+      title: document.title, chunks, model: env.RAG_EMBEDDING_MODEL, version: EMBEDDING_INPUT_VERSION
+    })).digest('hex');
     const { count: currentChunkCount, error: countError } = await db
       .from('knowledge_chunks')
       .select('id', { count: 'exact', head: true })
       .eq('knowledge_document_id', document.id)
+      .eq('tenant_id', tenantId)
       .eq('content_hash', contentHash)
+      .eq('metadata->>index_fingerprint', fingerprint)
       .eq('embedding_model', env.RAG_EMBEDDING_MODEL);
     if (countError) throw countError;
     if (chunks.length > 0 && currentChunkCount === chunks.length) {
@@ -284,7 +310,7 @@ export async function indexApprovedKnowledge(tenantId = env.RAG_TENANT_ID): Prom
           content_hash: contentHash,
           embedding_model: env.RAG_EMBEDDING_MODEL,
           embedding: embeddings[index],
-          metadata: { source: 'knowledge_documents' }
+          metadata: { source: 'knowledge_documents', input_version: EMBEDDING_INPUT_VERSION, index_fingerprint: fingerprint }
         });
       });
       if (offset + env.RAG_EMBED_BATCH_SIZE < chunks.length && env.RAG_EMBED_DELAY_MS > 0) {
@@ -292,12 +318,14 @@ export async function indexApprovedKnowledge(tenantId = env.RAG_TENANT_ID): Prom
       }
     }
 
-    const { error: deleteError } = await db.from('knowledge_chunks').delete().eq('knowledge_document_id', document.id);
-    if (deleteError) throw deleteError;
-    for (let offset = 0; offset < records.length; offset += 100) {
-      const { error: insertError } = await db.from('knowledge_chunks').insert(records.slice(offset, offset + 100));
-      if (insertError) throw insertError;
-    }
+    // Replace a document in one DB transaction; failed inserts preserve its existing index.
+    const { error: replaceError } = await db.rpc('replace_knowledge_document_chunks', {
+      document_id: document.id, filter_tenant_id: tenantId,
+      filter_embedding_model: env.RAG_EMBEDDING_MODEL,
+      expected_content: document.content, expected_title: document.title,
+      chunks: records
+    });
+    if (replaceError) throw replaceError;
     chunksIndexed += records.length;
   }
 
@@ -309,7 +337,8 @@ export async function getRagIndexStatus(tenantId = env.RAG_TENANT_ID): Promise<R
     db.from('knowledge_documents').select('id', { count: 'exact' })
       .eq('approval_status', 'approved').eq('tenant_id', tenantId).limit(5000),
     db.from('knowledge_chunks').select('knowledge_document_id', { count: 'exact' })
-      .eq('tenant_id', tenantId).limit(10000)
+      .eq('tenant_id', tenantId).eq('embedding_model', env.RAG_EMBEDDING_MODEL)
+      .eq('metadata->>input_version', EMBEDDING_INPUT_VERSION).limit(10000)
   ]);
   if (documentsResult.error) throw documentsResult.error;
   if (chunksResult.error) throw chunksResult.error;

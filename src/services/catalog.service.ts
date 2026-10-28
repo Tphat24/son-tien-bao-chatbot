@@ -228,25 +228,16 @@ export async function getProductBySku(sku: string): Promise<ProductRow | null> {
   return data as ProductRow | null;
 }
 
-function isCompanyWebsiteUrl(rawUrl: string | null): boolean {
-  if (!rawUrl) return false;
-  try {
-    return new URL(rawUrl).origin === new URL(env.COMPANY_WEBSITE).origin;
-  } catch {
-    return false;
-  }
-}
-
 export async function searchKnowledge(query: string, max = env.AI_MAX_KNOWLEDGE_DOCS): Promise<KnowledgeRow[]> {
   const { data, error } = await db
     .from('knowledge_documents')
-    .select('title,content,source_url,approval_status')
-    .neq('approval_status', 'rejected')
+    .select('id,title,content,source_url,approval_status')
+    .eq('tenant_id', env.RAG_TENANT_ID)
+    .eq('approval_status', 'approved')
     .limit(700);
   if (error) throw error;
 
   return ((data ?? []) as KnowledgeRow[])
-    .filter((document) => document.approval_status === 'approved' || isCompanyWebsiteUrl(document.source_url))
     .map((document) => ({
       document,
       score: relevanceScore({ query, title: document.title, content: document.content, url: document.source_url })

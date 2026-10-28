@@ -4,6 +4,7 @@ import { generateSafeReply } from './ai.service.js';
 import type { AiGenerationTelemetry } from './ai.service.js';
 import { appendConversationTurn, getConversationHistory } from './conversation.service.js';
 import { answerPaintCalculationMessage } from './paint-calculator-chat.service.js';
+import { buildRetrievalQuery } from './retrieval-ranking.js';
 
 export type WebChatSource = {
   title: string;
@@ -39,10 +40,7 @@ export async function answerWebMessage(input: {
   };
 }> {
   const history = await getConversationHistory(input.sessionId);
-  const retrievalQuery = [
-    ...history.slice(-4).map((turn) => turn.content),
-    input.message
-  ].join(' | ');
+  const retrievalQuery = buildRetrievalQuery(input.message, history);
 
   await appendConversationTurn({
     userId: input.sessionId,

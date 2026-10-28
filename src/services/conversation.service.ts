@@ -1,5 +1,5 @@
 import { db } from '../db/supabase.js';
-import { clip } from '../utils/text.js';
+import { env } from '../config/env.js';
 
 export type ConversationTurn = {
   role: 'user' | 'assistant';
@@ -33,7 +33,7 @@ export async function appendConversationTurn(input: {
       ...current,
       {
         role: input.role,
-        content: clip(input.content, 900),
+        content: input.content.trim().slice(0, env.AI_WEBSITE_MAX_REPLY_CHARS),
         created_at: new Date().toISOString()
       }
     ].slice(-8);
