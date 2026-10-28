@@ -41,8 +41,8 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'son-tien-bao-enterprise-rag', version: '6.2.0', time: new Date().toISOString() }));
-app.get('/version', (_req, res) => res.json({ version: '6.2.0', build: 'readable-chat-retrieval-v2' }));
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'son-tien-bao-enterprise-rag', version: '6.3.0', time: new Date().toISOString() }));
+app.get('/version', (_req, res) => res.json({ version: '6.3.0', build: 'shopping-navigation-guard-compact-mobile' }));
 app.use('/api/web-chat', webChatRouter);
 app.use('/api/zalo-chatbot', zaloChatbotRouter);
 app.use('/api/zalo-bot', zaloBotRouter);
@@ -62,6 +62,14 @@ app.use('/api/admin', adminRouter);
 
 const publicDir = path.join(process.cwd(), 'public');
 
+for (const filename of ['widget.js', 'site-guard.js']) {
+  app.get(`/${filename}`, (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-STB-Widget-Version', '6.3.0');
+    res.sendFile(path.join(publicDir, filename));
+  });
+}
+
 app.use(express.static(publicDir));
 
 app.use((_req, res) => {
@@ -74,5 +82,5 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
 });
 
 app.listen(env.PORT, '0.0.0.0', () => {
-  console.log(`Sơn Tiến Bảo Enterprise RAG v6.2.0 running on 0.0.0.0:${env.PORT}`);
+  console.log(`Sơn Tiến Bảo Enterprise RAG v6.3.0 running on 0.0.0.0:${env.PORT}`);
 });

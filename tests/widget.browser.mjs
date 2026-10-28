@@ -42,7 +42,7 @@ try {
     const host = page.locator('#stb-ai-chatbot');
     await host.locator('.stb-bubble').waitFor({ state: 'attached' });
     const launchBox = await host.locator('.stb-launch').boundingBox();
-    assert.equal(launchBox.width, width <= 520 ? 48 : 56);
+    assert.equal(launchBox.width, width <= 520 ? 44 : 56);
     if (width === 390) await page.screenshot({ path: new URL('../artifacts/mobile-launcher.png', import.meta.url).pathname.replace(/^\/(.:)/, '$1'), fullPage: true });
     await host.locator('.stb-launch').click();
     await assert.doesNotReject(() => host.locator('.stb-panel').waitFor({ state: 'visible' }));
