@@ -55,6 +55,8 @@ export type LeadRecord = {
   zalo_chatbot_user_id: string | null;
   created_at: string;
   updated_at: string;
+  handoff_summary: string | null;
+  handoff_transcript: Array<{ role: string; content: string; created_at: string }>;
 };
 
 export type ListLeadsParams = {
@@ -77,7 +79,7 @@ export type ListLeadsResult = {
 };
 
 const LEAD_COLUMNS =
-  'id,code,name,phone,area,budget,need,source,channel,priority,status,potential,note,tags,product_interest,area_m2,buy_time,assigned_to,zalo_user_id,zalo_chatbot_user_id,created_at,updated_at';
+  'id,code,name,phone,area,budget,need,source,channel,priority,status,potential,note,tags,product_interest,area_m2,buy_time,assigned_to,zalo_user_id,zalo_chatbot_user_id,created_at,updated_at,handoff_summary,handoff_transcript';
 
 /** Danh sách lead có lọc + phân trang + sắp xếp. */
 export async function listLeads(params: ListLeadsParams): Promise<ListLeadsResult> {

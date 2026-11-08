@@ -4,7 +4,7 @@
   'use strict';
   const script = document.currentScript;
   if (script?.dataset.blockShoppingRedirects === 'false' || window.__stbNavigationGuard) return;
-  const state = { version: '6.3.0', blockedCount: 0 };
+  const state = { version: '6.4.0', blockedCount: 0 };
   const blockedHosts = new Set([
     'shopee.vn', 'shopee.com', 'shopee.sg', 'shopee.ph', 'shopee.co.th',
     'shopee.co.id', 'shopee.com.my', 'shopee.tw', 'shopee.com.br', 'shopee.com.mx',

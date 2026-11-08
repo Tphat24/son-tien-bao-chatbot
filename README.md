@@ -1,4 +1,8 @@
-# Sơn Tiến Bảo Web Smart Advisor v6.3
+# Sơn Tiến Bảo Web Smart Advisor v6.4
+
+## So sánh sản phẩm, tiếp nhận nhu cầu và cải thiện câu trả lời
+
+v6.4 thêm bảng so sánh 2–3 sản phẩm đã duyệt ngay trong widget, gửi tóm tắt/lịch sử gần đây kèm yêu cầu tư vấn, và hàng chờ câu trả lời cần xem lại trong trang quản trị. Khách có thể đánh giá câu trả lời; quản lý sửa và duyệt FAQ vào kho tri thức rồi lập chỉ mục RAG. Cần áp dụng [migration 05 và hướng dẫn triển khai](docs/UPGRADE_SALES_ASSISTANCE_V64.md) trước khi deploy.
 
 ## Sửa tự mở Shopee và icon điện thoại
 
