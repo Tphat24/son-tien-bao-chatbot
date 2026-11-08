@@ -105,6 +105,7 @@ export async function startKnowledgeReindex(): Promise<{ id: string; startedAt: 
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
     return { id: data?.id ?? 'running', startedAt: data?.started_at ?? data?.created_at ?? startedAt, alreadyRunning: true };
   }
+  if (insertError) throw insertError;
   activeIndexJob = { id, startedAt };
 
   void (async () => {

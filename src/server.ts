@@ -16,6 +16,7 @@ import { quotationRouter } from './routes/quotation.routes.js';
 import { leadAdminRouter } from './routes/lead-admin.routes.js';
 import { settingsRouter } from './routes/settings.routes.js';
 import { knowledgeAdminRouter } from './routes/knowledge-admin.routes.js';
+import { answerReviewRouter } from './routes/answer-review.routes.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -41,8 +42,8 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'son-tien-bao-enterprise-rag', version: '6.3.0', time: new Date().toISOString() }));
-app.get('/version', (_req, res) => res.json({ version: '6.3.0', build: 'shopping-navigation-guard-compact-mobile' }));
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'son-tien-bao-enterprise-rag', version: '6.4.0', time: new Date().toISOString() }));
+app.get('/version', (_req, res) => res.json({ version: '6.4.0', build: 'product-comparison-handoff-answer-review' }));
 app.use('/api/web-chat', webChatRouter);
 app.use('/api/zalo-chatbot', zaloChatbotRouter);
 app.use('/api/zalo-bot', zaloBotRouter);
@@ -54,6 +55,7 @@ app.use('/api/admin/quotations', quotationRouter);
 app.use('/api/admin/leads', leadAdminRouter);
 app.use('/api/admin/settings', settingsRouter);
 app.use('/api/admin/knowledge', knowledgeAdminRouter);
+app.use('/api/admin/answer-reviews', answerReviewRouter);
 
 app.use('/api/colors', colorRouter);
 
@@ -65,7 +67,7 @@ const publicDir = path.join(process.cwd(), 'public');
 for (const filename of ['widget.js', 'site-guard.js']) {
   app.get(`/${filename}`, (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('X-STB-Widget-Version', '6.3.0');
+    res.setHeader('X-STB-Widget-Version', '6.4.0');
     res.sendFile(path.join(publicDir, filename));
   });
 }
@@ -82,5 +84,5 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
 });
 
 app.listen(env.PORT, '0.0.0.0', () => {
-  console.log(`Sơn Tiến Bảo Enterprise RAG v6.3.0 running on 0.0.0.0:${env.PORT}`);
+  console.log(`Sơn Tiến Bảo Enterprise RAG v6.4.0 running on 0.0.0.0:${env.PORT}`);
 });

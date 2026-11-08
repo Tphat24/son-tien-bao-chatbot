@@ -66,7 +66,7 @@ try {
     }
     await host.locator('.stb-chip').filter({ hasText: 'Để lại yêu cầu' }).click();
     await host.locator('.stb-lead').waitFor({ state: 'visible' });
-    assert.equal(await host.locator('.stb-lead input').count(), 2);
+    assert.equal(await host.locator('.stb-lead input').count(), 4);
     await page.evaluate(() => {
       const popup = document.createElement('aside'); popup.id = 'promo'; popup.textContent = 'Quảng cáo tải muộn'; document.body.append(popup);
     });

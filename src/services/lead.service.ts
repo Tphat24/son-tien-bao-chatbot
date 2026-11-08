@@ -44,6 +44,8 @@ export async function createLead(input: {
   budget?: string;
   priority?: LeadPriority;
   source?: string;
+  handoffSummary?: string;
+  handoffTranscript?: Array<{ role: string; content: string; created_at: string }>;
 }) {
   const recentSince = new Date(Date.now() - 5 * 60_000).toISOString();
 
@@ -61,7 +63,15 @@ export async function createLead(input: {
       : duplicateQuery.eq('phone', input.phone!);
 
     const { data: duplicates } = await duplicateQuery;
-    if (duplicates?.[0]) return duplicates[0];
+    if (duplicates?.[0]) {
+      if (input.handoffSummary) {
+        const { data, error } = await db.from('leads').update({ handoff_summary: input.handoffSummary, handoff_transcript: input.handoffTranscript ?? [] })
+          .eq('id', duplicates[0].id).select().single();
+        if (error) throw error;
+        return data;
+      }
+      return duplicates[0];
+    }
   }
 
   const code = `STB-${Date.now().toString(36).toUpperCase()}`;
@@ -80,6 +90,7 @@ export async function createLead(input: {
       budget: input.budget ?? null,
       priority,
       source,
+      ...(input.handoffSummary ? { handoff_summary: input.handoffSummary, handoff_transcript: input.handoffTranscript ?? [] } : {}),
       status: 'new'
     })
     .select()
@@ -96,7 +107,7 @@ export async function createLead(input: {
     area: input.area,
     budget: input.budget,
     priority
-  });
+  }) + (input.handoffSummary ? `\n\nTÓM TẮT TIẾP NHẬN\n${input.handoffSummary}` : '');
 
   void sendLeadEmail(`[Sơn Tiến Bảo] Lead mới ${code}`, notification)
     .catch((mailError) => console.error('lead_email_failed', mailError));

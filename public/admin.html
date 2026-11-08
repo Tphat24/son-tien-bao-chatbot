@@ -58,6 +58,7 @@ dialog{border:none;border-radius:14px;padding:0;max-width:640px;width:92%;box-sh
 dialog::backdrop{background:#0006}
 .dlg-h{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
 .dlg-h h3{margin:0}
+#dlg-actions{flex-wrap:wrap}
 .dlg-b{padding:22px;max-height:70vh;overflow:auto}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fld{margin-bottom:12px}
@@ -95,6 +96,7 @@ dialog::backdrop{background:#0006}
     <a data-view="leads">Khách hàng</a>
     <a data-view="products">Sản phẩm</a>
     <a data-view="knowledge">Kho tri thức</a>
+    <a data-view="answerReviews">Câu trả lời cần xem lại</a>
     <a data-view="quotations">Báo giá</a>
     <a data-view="colors">Bảng màu</a>
     <a data-view="settings" data-perm="settings">Cấu hình</a>
@@ -129,7 +131,7 @@ async function api(path, opts={}){
   if(res.status===401){ logout(); throw new Error('Phiên đăng nhập hết hạn'); }
   const text = await res.text();
   let data; try{ data = text?JSON.parse(text):{}; }catch{ data = {raw:text}; }
-  if(!res.ok) throw new Error(data.error||('Lỗi '+res.status));
+  if(!res.ok) throw new Error(data.message||data.error||('Lỗi '+res.status));
   return data;
 }
 
@@ -167,7 +169,7 @@ function go(view){
   document.querySelectorAll('.side a').forEach(a=>a.classList.toggle('active',a.dataset.view===view));
   document.getElementById('side').classList.remove('open');
   const el=document.getElementById('view'); el.innerHTML='<p class="muted">Đang tải…</p>';
-  ({dashboard:viewDashboard,leads:viewLeads,products:viewProducts,knowledge:viewKnowledge,quotations:viewQuotations,colors:viewColors,settings:viewSettings,staff:viewStaff}[view]||viewDashboard)(el).catch(e=>{el.innerHTML='<div class="panel"><p class="err">'+esc(e.message)+'</p></div>'});
+  ({dashboard:viewDashboard,leads:viewLeads,products:viewProducts,knowledge:viewKnowledge,answerReviews:viewAnswerReviews,quotations:viewQuotations,colors:viewColors,settings:viewSettings,staff:viewStaff}[view]||viewDashboard)(el).catch(e=>{el.innerHTML='<div class="panel"><p class="err">'+esc(e.message)+'</p></div>'});
 }
 
 /* ---------------- Dashboard ---------------- */
@@ -249,6 +251,8 @@ async function openLead(id){
       <div class="fld"><label>Ngân sách</label><input value="${esc(l.budget||'')}" disabled></div>
     </div>
     <div class="fld"><label>Nhu cầu</label><textarea rows=2 disabled>${esc(l.need||'')}</textarea></div>
+    ${l.handoff_summary ? `<div class="panel"><h3>Tóm tắt tiếp nhận</h3><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(l.handoff_summary)}</p></div>` : ''}
+    ${l.handoff_transcript?.length ? `<details><summary>Lịch sử gửi kèm · ${l.handoff_transcript.length} lượt</summary>${l.handoff_transcript.map(t=>`<p style="white-space:pre-wrap;overflow-wrap:anywhere"><strong>${t.role==='user'?'Khách':'Bot (chưa được nhân viên xác nhận)'}</strong><br>${esc(t.content)}</p>`).join('')}</details>` : ''}
     <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
     <div class="grid2">
       <div class="fld"><label>Trạng thái</label><select id="ed-status" ${canWrite?'':'disabled'}>${LEAD_STATUSES.map(s=>`<option value="${s}" ${l.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select></div>
@@ -259,6 +263,42 @@ async function openLead(id){
     await api('/admin/leads/'+id,{method:'PATCH',body:JSON.stringify({status:document.getElementById('ed-status').value,potential:document.getElementById('ed-potential').value||null,note:document.getElementById('ed-note').value})});
     toast('Đã lưu');close();loadLeads();
   }}]:[]);
+}
+
+/* ---------------- Answer quality queue ---------------- */
+const REVIEW_LABELS={open:'Cần xem lại',draft:'Đang sửa',resolved:'Đã duyệt vào kho',dismissed:'Đã bỏ qua'};
+let answerReviewItems=[];
+async function viewAnswerReviews(el){
+  el.innerHTML='<h1>Câu trả lời cần xem lại</h1><div class="panel"><p>Gồm câu thiếu dữ liệu, lỗi xử lý và góp ý “Chưa hữu ích” của khách. Chỉ quản lý được sửa và duyệt đáp án vào kho tri thức.</p><div class="row"><select id="ar-status"><option value="open">Cần xem lại</option><option value="draft">Đang sửa</option><option value="resolved">Đã duyệt vào kho</option><option value="dismissed">Đã bỏ qua</option><option value="">Tất cả</option></select><button class="btn" id="ar-load">Lọc</button><span id="ar-count" class="muted"></span></div><div class="tblwrap"><table><thead><tr><th>Câu hỏi</th><th>Lý do</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead><tbody id="ar-rows"></tbody></table></div><div class="row"><button class="btn ghost" id="ar-prev">Trước</button><span id="ar-page"></span><button class="btn ghost" id="ar-next">Sau</button></div></div>';
+  let page=1;
+  async function load(){
+    const params=new URLSearchParams({page:String(page)});const status=document.getElementById('ar-status').value;if(status)params.set('status',status);
+    const result=await api('/admin/answer-reviews?'+params);answerReviewItems=result.items;
+    document.getElementById('ar-count').textContent=result.total+' câu';document.getElementById('ar-page').textContent='Trang '+page;
+    document.getElementById('ar-prev').disabled=page===1;document.getElementById('ar-next').disabled=page*result.pageSize>=result.total;
+    const rows=document.getElementById('ar-rows');rows.innerHTML=result.items.map(r=>`<tr><td>${esc(r.question)}</td><td>${esc(r.reason==='no_data'?'Thiếu dữ liệu':r.reason==='system_fallback'?'Lỗi xử lý':'Khách góp ý')}</td><td>${esc(REVIEW_LABELS[r.status])}</td><td>${fmtDate(r.created_at)}</td><td><button class="btn ghost sm" data-review="${esc(r.id)}">Xem / xử lý</button></td></tr>`).join('')||'<tr><td colspan="5">Chưa có câu cần xử lý trong bộ lọc này.</td></tr>';
+    rows.querySelectorAll('[data-review]').forEach(button=>button.onclick=()=>openAnswerReview(button.dataset.review,load));
+  }
+  document.getElementById('ar-load').onclick=()=>{page=1;load().catch(e=>toast(e.message,true));};
+  document.getElementById('ar-prev').onclick=()=>{page--;load().catch(e=>toast(e.message,true));};
+  document.getElementById('ar-next').onclick=()=>{page++;load().catch(e=>toast(e.message,true));};
+  await load();
+}
+function openAnswerReview(id,reload){
+  const r=answerReviewItems.find(item=>item.id===id);if(!r)return;
+  const canWrite=['super_admin','manager'].includes(State.staff.role),editable=canWrite&&['open','draft'].includes(r.status);
+  const fields=()=>({faqQuestion:val('ar-question'),correctedAnswer:val('ar-answer'),status:'draft'});
+  const actions=editable?[
+    {label:'Lưu bản sửa',fn:async(close)=>{await api('/admin/answer-reviews/'+id,{method:'PATCH',body:JSON.stringify(fields())});close();await reload();toast('Đã lưu bản sửa, chưa đưa vào RAG');}},
+    {label:'Duyệt vào kho tri thức',fn:async(close)=>{
+      if(!document.getElementById('ar-confirm').checked){toast('Hãy đối chiếu tài liệu và kiểm tra thông tin riêng trước khi duyệt',true);return;}
+      await api('/admin/answer-reviews/'+id,{method:'PATCH',body:JSON.stringify(fields())});
+      const result=await api('/admin/answer-reviews/'+id+'/publish',{method:'POST',body:JSON.stringify({confirmed:true})});
+      close();await reload();toast(result.reindexStarted?'Đã duyệt; đang cập nhật chỉ mục RAG':'Đã duyệt; cần vào Kho tri thức để lập chỉ mục lại');
+    }},
+    {label:'Bỏ qua',cls:'btn ghost',fn:async(close)=>{await api('/admin/answer-reviews/'+id,{method:'PATCH',body:JSON.stringify({status:'dismissed'})});close();await reload();}}
+  ]:canWrite&&r.status==='dismissed'?[{label:'Mở lại',fn:async(close)=>{await api('/admin/answer-reviews/'+id,{method:'PATCH',body:JSON.stringify({status:'open'})});close();await reload();}}]:[];
+  dlg('Kiểm tra câu trả lời',`<p><strong>Câu hỏi gốc</strong></p><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(r.question)}</p><details><summary>Câu trả lời của bot</summary><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(r.answer)}</p></details><p><strong>Góp ý của khách:</strong> ${esc(r.customer_comment||'Không có nội dung bổ sung')}</p><hr><p class="muted">Nội dung dưới đây sẽ trở thành tài liệu dùng chung. Loại bỏ tên, số điện thoại, địa chỉ và thông tin riêng của khách; đối chiếu tài liệu sản phẩm trước khi duyệt.</p><div class="fld"><label>Câu hỏi dùng trong kho tri thức</label><textarea id="ar-question" rows="3" maxlength="1200" ${editable?'':'disabled'}>${esc(r.faq_question||'')}</textarea></div><div class="fld"><label>Đáp án đã kiểm tra</label><textarea id="ar-answer" rows="8" maxlength="12000" ${editable?'':'disabled'}>${esc(r.corrected_answer||'')}</textarea></div>${editable?'<label><input type="checkbox" id="ar-confirm"> Tôi đã kiểm tra tính chính xác và loại bỏ thông tin riêng của khách.</label>':''}`,actions);
 }
 
 /* ---------------- Products ---------------- */

@@ -4,7 +4,7 @@
   'use strict';
   const script = document.currentScript;
   if (script?.dataset.blockShoppingRedirects === 'false' || window.__stbNavigationGuard) return;
-  const state = { version: '6.3.0', blockedCount: 0 };
+  const state = { version: '6.4.0', blockedCount: 0 };
   const blockedHosts = new Set([
     'shopee.vn', 'shopee.com', 'shopee.sg', 'shopee.ph', 'shopee.co.th',
     'shopee.co.id', 'shopee.com.my', 'shopee.tw', 'shopee.com.br', 'shopee.com.mx',
@@ -133,7 +133,7 @@
 
   const host = document.createElement('div');
   host.id = 'stb-ai-chatbot';
-  host.dataset.widgetVersion = '6.3.0';
+  host.dataset.widgetVersion = '6.4.0';
   document.body.appendChild(host);
 
   const root = host.attachShadow({
@@ -251,6 +251,25 @@
     .stb-success-actions { margin-bottom: 16px; }
     .stb-button-spinner { width: 14px; height: 14px; border: 2px solid #ffffff70; border-top-color: white; border-radius: 50%; animation: stbSpin .7s linear infinite; }
     .stb-foot { padding: 10px 12px; border-top: 1px solid #dce6df; background: white; }
+    .stb-tools { display: flex; gap: 8px; margin-bottom: 8px; }
+    .stb-action { flex: 1; min-height: 40px; padding: 6px 8px; border: 1px solid #cadbd0; border-radius: 9px; color: #17523a; background: #f2f7f4; font-size: 13px; }
+    .stb-feedback { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; font-size: 12px; }
+    .stb-feedback button { padding: 6px 8px; min-height: 36px; border: 1px solid #dce6df; border-radius: 8px; color: #395b45; background: white; font-size: 12px; }
+    .stb-feedback form { width: 100%; }
+    .stb-feedback textarea { width: 100%; margin: 8px 0; padding: 8px; font-size: 16px; }
+    .stb-comparison { min-width: 0; margin-bottom: 16px; padding: 12px; background: white; border: 1px solid #cadbd0; border-radius: 12px; }
+    .stb-comparison h3 { margin: 0 0 8px; font-size: 16px; }
+    .stb-compare-search { display: flex; gap: 6px; margin: 10px 0; }
+    .stb-compare-search input { min-width: 0; flex: 1; }
+    .stb-compare-options label { display: flex; align-items: center; gap: 8px; padding: 8px 0; font-size: 14px; cursor: pointer; }
+    .stb-compare-options input { width: 20px; height: 20px; flex: none; }
+    .stb-compare-table { max-width: 100%; overflow-x: auto; margin-top: 12px; }
+    .stb-compare-table table { border-collapse: collapse; min-width: 540px; font-size: 13px; line-height: 1.6; }
+    .stb-compare-table th, .stb-compare-table td { width: 150px; padding: 9px; border: 1px solid #dce6df; vertical-align: top; text-align: left; }
+    .stb-compare-table caption { text-align: left; font-weight: 700; padding-bottom: 8px; }
+    .stb-handoff-preview { margin: 12px 0; padding: 8px; background: #f2f7f4; font-size: 13px; }
+    .stb-handoff-preview p { white-space: pre-wrap; }
+    .stb-tools button:focus-visible, .stb-comparison button:focus-visible { outline: 3px solid #d68a13; outline-offset: 2px; }
     .stb-input-row { display: flex; align-items: flex-end; gap: 8px; padding: 4px 4px 4px 12px; border: 1px solid #bdcec2; border-radius: 12px; background: white; }
     .stb-input-row:focus-within { outline: 2px solid #137346; outline-offset: 1px; }
     .stb-textarea { flex: 1; min-width: 0; max-height: 90px; padding: 10px 0; border: 0; outline: none; resize: none; background: transparent; color: #172f25; font-size: 16px; line-height: 1.5; }
@@ -360,6 +379,10 @@
       </main>
 
       <footer class="stb-foot">
+        <div class="stb-tools">
+          <button class="stb-action" type="button" data-compare>So sánh sơn</button>
+          <button class="stb-action" type="button" data-handoff>Nhờ nhân viên</button>
+        </div>
         <div class="stb-input-row">
           <textarea
             class="stb-textarea"
@@ -416,6 +439,7 @@
 
   const textarea =
     wrap.querySelector('.stb-textarea');
+  textarea.value = '';
 
   const send =
     wrap.querySelector('.stb-send');
@@ -468,6 +492,7 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
 
   let busy = false;
   let messages = [];
+  let comparedProducts = [];
 
   try {
     messages = JSON.parse(
@@ -639,7 +664,8 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
   function addMessage(
     role,
     text,
-    persist = true
+    persist = true,
+    answerId = null
   ) {
     const row =
       document.createElement('div');
@@ -680,6 +706,7 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
     );
 
     bubble.appendChild(content);
+    if (role === 'bot' && answerId) renderFeedback(bubble, answerId);
 
     const time =
       document.createElement('div');
@@ -695,6 +722,7 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
       messages.push({
         role,
         text,
+        ...(answerId ? { answerId } : {}),
         time: Date.now()
       });
 
@@ -894,7 +922,9 @@ Anh/Chị cần hỗ trợ nội dung nào?`,
       addMessage(
         'bot',
         data.reply ||
-        'Em chưa nhận được nội dung phản hồi.'
+        'Em chưa nhận được nội dung phản hồi.',
+        true,
+        data.answerId || null
       );
 
       if (
@@ -1102,6 +1132,24 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
       </div>
     `;
 
+    const preview = document.createElement('details');
+    preview.className = 'stb-handoff-preview';
+    const heading = document.createElement('summary');
+    heading.textContent = 'Trao đổi sẽ được gửi kèm cho nhân viên';
+    const description = document.createElement('p');
+    description.textContent = [
+      ...messages.filter((item) => item.role === 'user').slice(-4).map((item) => `- ${String(item.text).slice(0, 400)}`),
+      ...(comparedProducts.length ? [`Sản phẩm chọn so sánh: ${comparedProducts.map((item) => item.name).join('; ')}`] : [])
+    ].join('\n') || 'Nhân viên sẽ nhận thông tin Anh/Chị điền và trao đổi gần đây trong phiên này.';
+    preview.append(heading, description);
+    form.querySelector('.stb-form-grid').after(preview);
+    for (const [name, label, placeholder] of [['area', 'Khu vực công trình (không bắt buộc)', 'Ví dụ: Thủ Đức'], ['budget', 'Ngân sách dự kiến (không bắt buộc)', 'Có thể để trống']]) {
+      const group = document.createElement('label'); group.className = 'stb-form-group';
+      const title = document.createElement('span'); title.className = 'stb-label'; title.textContent = label;
+      const field = document.createElement('input'); field.className = 'stb-field'; field.name = name; field.maxLength = 120; field.placeholder = placeholder;
+      group.append(title, field); form.querySelector('.stb-form-grid').append(group);
+    }
+
     const errorBox =
       form.querySelector(
         '.stb-form-error'
@@ -1205,7 +1253,10 @@ Anh/Chị có thể liên hệ trực tiếp qua Zalo, điện thoại hoặc em
                 sessionId,
                 name,
                 phone,
-                need
+                need,
+                area: String(fd.get('area') || '').trim(),
+                budget: String(fd.get('budget') || '').trim(),
+                productIds: comparedProducts.map((item) => item.id)
               })
             }
           );
@@ -1266,6 +1317,7 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
       String(label)
         .trim()
         .toLowerCase();
+    if (normalized.includes('so sánh')) { showComparison(); return; }
     if (normalized.includes('để lại yêu cầu')) {
       showLeadForm();
       return;
@@ -1326,7 +1378,8 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
         addMessage(
           message.role,
           message.text,
-          false
+          false,
+          message.answerId || null
         );
       });
 
@@ -1345,6 +1398,94 @@ Bộ phận tư vấn Sơn Tiến Bảo sẽ liên hệ lại qua số ${phone}.
       );
     }
   }
+
+  async function sendFeedback(answerId, rating, comment) {
+    await ensureSession();
+    const response = await fetch(`${apiBase}/api/web-chat/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, answerId, rating, comment }) });
+    if (!response.ok) throw new Error('Chưa gửi được đánh giá. Vui lòng thử lại.');
+  }
+  function renderFeedback(bubble, answerId) {
+    const box = document.createElement('div'); box.className = 'stb-feedback';
+    const status = document.createElement('span'); status.setAttribute('role', 'status');
+    const helpful = document.createElement('button'); helpful.type = 'button'; helpful.textContent = 'Hữu ích';
+    const unclear = document.createElement('button'); unclear.type = 'button'; unclear.textContent = 'Chưa hữu ích';
+    helpful.addEventListener('click', async () => {
+      helpful.disabled = unclear.disabled = true;
+      try { await sendFeedback(answerId, 'helpful'); box.replaceChildren(status); status.textContent = 'Cảm ơn Anh/Chị đã đánh giá.'; }
+      catch (error) { status.textContent = error.message; helpful.disabled = unclear.disabled = false; }
+    });
+    unclear.addEventListener('click', () => {
+      if (box.querySelector('form')) return;
+      const form = document.createElement('form');
+      const label = document.createElement('label'); label.textContent = 'Phần nào cần làm rõ? (không bắt buộc)';
+      const input = document.createElement('textarea'); input.maxLength = 1000; input.rows = 2; label.append(input);
+      const submit = document.createElement('button'); submit.textContent = 'Gửi góp ý'; submit.type = 'submit';
+      form.append(label, submit); box.append(form);
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault(); submit.disabled = true;
+        try { await sendFeedback(answerId, 'not_helpful', input.value.trim()); box.replaceChildren(status); status.textContent = 'Đã ghi nhận để nhân viên kiểm tra và cải thiện câu trả lời.'; }
+        catch (error) { status.textContent = error.message; submit.disabled = false; }
+      });
+    });
+    box.append(helpful, unclear, status); bubble.append(box);
+  }
+  function showComparison() {
+    const existing = body.querySelector('.stb-comparison');
+    if (existing) { existing.scrollIntoView({ block: 'nearest' }); return; }
+    removeQuickReplies();
+    const form = document.createElement('form'); form.className = 'stb-comparison';
+    form.innerHTML = '<h3>So sánh 2–3 sản phẩm</h3><p>Tìm theo tên hoặc mã sản phẩm, rồi chọn các sản phẩm cần so sánh.</p><div class="stb-compare-search"><input class="stb-field" aria-label="Tên hoặc mã sản phẩm" maxlength="120" placeholder="Ví dụ: Jotashield"><button type="button" class="stb-secondary" data-search>Tìm</button></div><div class="stb-compare-options"></div><p role="status" data-status></p><button type="submit" class="stb-primary" disabled>So sánh đã chọn</button><button type="button" class="stb-secondary" data-close>Đóng so sánh</button><div data-result></div>';
+    const selected = new Map(comparedProducts.map((item) => [item.id, item]));
+    const options = form.querySelector('.stb-compare-options'), status = form.querySelector('[data-status]'), submit = form.querySelector('[type="submit"]');
+    const query = form.querySelector('input'), search = form.querySelector('[data-search]');
+    const update = () => { submit.disabled = selected.size < 2; status.textContent = `Đã chọn ${selected.size}/3: ${[...selected.values()].map((p) => p.name).join('; ')}`; };
+    async function load() {
+      search.disabled = true; status.textContent = 'Đang tìm sản phẩm…';
+      try {
+        const response = await fetch(`${apiBase}/api/web-chat/products?q=${encodeURIComponent(query.value.trim())}`);
+        if (!response.ok) throw new Error('Chưa tải được sản phẩm. Vui lòng thử lại.');
+        const data = await response.json(); options.replaceChildren();
+        for (const product of data.products || []) {
+          const label = document.createElement('label'), check = document.createElement('input'), text = document.createElement('span');
+          check.type = 'checkbox'; check.checked = selected.has(product.id); check.value = product.id;
+          text.textContent = `${product.name} (${product.sku})`; label.append(check, text); options.append(label);
+          check.addEventListener('change', () => {
+            if (check.checked && selected.size >= 3) { check.checked = false; status.textContent = 'Chọn tối đa 3 sản phẩm.'; return; }
+            if (check.checked) selected.set(product.id, product); else selected.delete(product.id); update();
+          });
+        }
+        update(); if (!data.products?.length) status.textContent += ' Không tìm thấy sản phẩm đã duyệt phù hợp.';
+      } catch (error) { status.textContent = error.message; } finally { search.disabled = false; }
+    }
+    search.addEventListener('click', load);
+    query.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); load(); } });
+    form.querySelector('[data-close]').addEventListener('click', () => form.remove());
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault(); if (selected.size < 2 || selected.size > 3) return; submit.disabled = true;
+      try {
+        const response = await fetch(`${apiBase}/api/web-chat/compare`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productIds: [...selected.keys()] }) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Chưa so sánh được. Vui lòng tìm và chọn lại sản phẩm.');
+        comparedProducts = data.products;
+        const wrapper = document.createElement('div'); wrapper.className = 'stb-compare-table'; wrapper.tabIndex = 0; wrapper.setAttribute('aria-label', 'Bảng so sánh, cuộn ngang để xem đủ sản phẩm');
+        const table = document.createElement('table'), caption = document.createElement('caption'); caption.textContent = 'Dữ liệu sản phẩm đã duyệt'; table.append(caption);
+        const head = document.createElement('tr');
+        for (const text of ['Thông tin', ...data.products.map((p) => p.name)]) { const cell = document.createElement('th'); cell.scope = 'col'; cell.textContent = text; head.append(cell); }
+        const thead = document.createElement('thead'); thead.append(head); table.append(thead);
+        const tbody = document.createElement('tbody');
+        for (const row of data.rows) {
+          const tr = document.createElement('tr'), label = document.createElement('th'); label.scope = 'row'; label.textContent = row.label; tr.append(label);
+          for (const value of row.values) { const cell = document.createElement('td'); cell.textContent = value; tr.append(cell); } tbody.append(tr);
+        }
+        table.append(tbody); wrapper.append(table);
+        const note = document.createElement('p'); note.textContent = `Cuộn ngang bảng để xem đủ sản phẩm. ${data.note}`;
+        form.querySelector('[data-result]').replaceChildren(wrapper, note); status.textContent = 'Đã so sánh theo thông tin đã duyệt.';
+      } catch (error) { status.textContent = error.message; } finally { submit.disabled = selected.size < 2; }
+    });
+    body.append(form); load(); scrollBottom();
+  }
+  wrap.querySelector('[data-compare]').addEventListener('click', showComparison);
+  wrap.querySelector('[data-handoff]').addEventListener('click', showLeadForm);
 
   // Only known advertising containers and explicitly configured popups are suppressed.
   // Never guess generic .modal/.popup selectors: those can contain checkout or consent forms.
